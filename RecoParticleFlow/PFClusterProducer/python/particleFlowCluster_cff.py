@@ -16,8 +16,8 @@ from RecoParticleFlow.PFClusterProducer.particleFlowClusterHFEM_cfi import *
 from RecoParticleFlow.PFClusterProducer.particleFlowClusterHFHAD_cfi import *
 
 
-from RecoParticleFlow.PFClusterProducer.particleFlowClusterECAL_cff import *
-#from RecoParticleFlow.PFClusterProducer.particleFlowClusterECALWithTime_cff import *
+#from RecoParticleFlow.PFClusterProducer.particleFlowClusterECAL_cff import *
+from RecoParticleFlow.PFClusterProducer.particleFlowClusterECALWithTime_cff import *
 
 pfClusteringECAL = cms.Sequence(particleFlowClusterECALSequence)
 pfClusteringHCAL = cms.Sequence(particleFlowRecHitHCAL*particleFlowClusterHCAL)
