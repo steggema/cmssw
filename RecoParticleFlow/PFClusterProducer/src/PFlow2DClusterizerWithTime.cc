@@ -90,7 +90,8 @@ PFlow2DClusterizerWithTime(const edm::ParameterSet& conf) :
 double timeResolution(double energy, bool isEB)
 {
   // JAN - ECAL time cleaning based on sigmas
-  // time, energy
+  // this should go to another class that gets the
+  // parameters from some global config
   
   double N_EB = 26.4021428571; // # 27.45 <- EGM PAS
   double N_EE = 40.8921428571; // # 41.5937142857 # 36.08 <- EGM PAS
@@ -147,8 +148,6 @@ std::pair<double, double> clusterTimeResolution(const reco::PFCluster& cluster)
 
     double res = timeResolution(rh.energy()*fraction, isEB);
     double time = rh.time();
-    if (res == 0.)
-      std::cout << "THIS SHOULD NEVER HAPPEN: Resolution = 0" << std::endl;
     sumTimeSigma2 += time/res/res;
     sumSigma2 += 1./res/res;
   }
@@ -161,7 +160,6 @@ std::pair<double, double> clusterTimeResolution(const reco::PFCluster& cluster)
 
 double clusterChi2Prob(const reco::PFCluster& cluster, const reco::PFRecHit& rhNew, double threshold)
 { 
-  // std::cout << "clusterChi2Prob, cluster size " << cluster.recHitFractions().size() << ", " << rhNew.layer()  << std::endl;
   if (cluster.recHitFractions().size() == 0)
     return 1.;
 
@@ -197,7 +195,6 @@ double clusterChi2Prob(const reco::PFCluster& cluster, const reco::PFRecHit& rhN
 
   double clusterTime = sumTimeSigma2/sumSigma2;
 
-  // std::cout << "cluster time: " << clusterTime << std::endl;
   // Start chi2 calculation
   double chi2 = 0.;
   // Don't count the first hit (no ndof), but count the outlier below
@@ -237,8 +234,6 @@ double clusterChi2Prob(const reco::PFCluster& cluster, const reco::PFRecHit& rhN
   // do stuff for the new hit
   double dtime = rhNew.time() - clusterTime;
   chi2 += dtime*dtime/resNew/resNew;
-
-  // std::cout << "chi2: " << chi2 << " ndof: " << ndof << std::endl;
 
   return TMath::Prob(chi2, ndof);
 }
@@ -370,7 +365,6 @@ growPFClusters(const reco::PFCluster& topo,
        else
        {
           const double tres2 = sqrt(clusterTimeRes*clusterTimeRes + pow(timeResolution(refhit->energy(), true), 2));
-          std::cout << "barrel, d2: " << d2 << " tc " << clusterTime << " tc M " << cluster.time() << " th " << refhit->time() << " t2/tres2 " << t2/tres2 << std::endl;
           d2 = d2 + t2/tres2;
         }
         
@@ -385,8 +379,6 @@ growPFClusters(const reco::PFCluster& topo,
         else
         {
           const double tres2 = sqrt(clusterTimeRes*clusterTimeRes + pow(timeResolution(refhit->energy(), false), 2));
-          d2 = d2 + t2/tres2;
-          std::cout << "endcap, d2: " << d2 << " tc " << clusterTime << " tc M " << cluster.time() << " th " << refhit->time() << " t2/tres2 " << t2/tres2 << std::endl;
           d2 = d2 + t2/tres2;
         }
 
