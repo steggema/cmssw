@@ -102,6 +102,8 @@ _pfClusterizerWithTime_ECAL = cms.PSet(
     maxIterations = cms.uint32(50),
     excludeOtherSeeds = cms.bool(True),
     minFracTot = cms.double(1e-20), ## numerical stabilization
+    applyChi2ProbCut = cms.bool(True),
+    useConstantTimeResolution = cms.bool(False),
     recHitEnergyNorms = cms.VPSet(
     cms.PSet( detector = cms.string("ECAL_BARREL"),
               recHitEnergyNorm = cms.double(0.08)
@@ -131,12 +133,21 @@ particleFlowClusterECALWithTimeUncorrected = cms.EDProducer(
 particleFlowClusterECALWithTimeSelected = cms.EDProducer(
     "PFClusterSelector",
     src = cms.InputTag('particleFlowClusterECALWithTimeUncorrected'),
-    energyRanges = cms.vdouble(0.,0.5,1.,2.,5.,5.),
-    timingCutsLow = cms.vdouble(-16.,-16.,-16.,-12.,-10.,-10.),
-    timingCutsHigh = cms.vdouble(16.,16.,16.,12.,10.,10.),
-    timingCutsEndcapLow = cms.vdouble(-18.,-18.,-18.,-18.,-14.,-14.),
-    timingCutsEndcapHigh = cms.vdouble(18.,18.,18.,18.,14.,14.)
+    energyRanges = cms.vdouble(1., 2., 5., 20., 20.),
+    timingCutsLow = cms.vdouble(-12., -6., -4., -4., -4.),
+    timingCutsHigh = cms.vdouble(12., 6., 4., 4., 4.),
+    timingCutsEndcapLow = cms.vdouble(-31.5, -20.5, -12., -5., -5.),
+    timingCutsEndcapHigh = cms.vdouble(31.5, 20.5, 12., 5., 5.)
     )
+# particleFlowClusterECALWithTimeSelected = cms.EDProducer(
+#     "PFClusterSelector",
+#     src = cms.InputTag('particleFlowClusterECALWithTimeUncorrected'),
+#     energyRanges = cms.vdouble(0.,0.5,1.,2.,5.,5.),
+#     timingCutsLow = cms.vdouble(-16.,-16.,-16.,-12.,-10.,-10.),
+#     timingCutsHigh = cms.vdouble(16.,16.,16.,12.,10.,10.),
+#     timingCutsEndcapLow = cms.vdouble(-18.,-18.,-18.,-18.,-14.,-14.),
+#     timingCutsEndcapHigh = cms.vdouble(18.,18.,18.,18.,14.,14.)
+#     )
 
 particleFlowClusterECAL = cms.EDProducer(
     "CorrectedECALPFClusterProducer",

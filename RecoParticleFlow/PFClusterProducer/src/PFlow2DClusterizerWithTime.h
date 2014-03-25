@@ -33,6 +33,8 @@ class PFlow2DClusterizerWithTime : public PFClusterBuilderBase {
   const double _timeSigma_ee;
   const bool _excludeOtherSeeds;
   const double _minFracTot;
+  const bool _applyChi2ProbCut;
+  const bool _useConstantTimeResolution;
   
   const std::unordered_map<std::string,int> _layerMap;
   std::unordered_map<int,double> _recHitEnergyNorms;
