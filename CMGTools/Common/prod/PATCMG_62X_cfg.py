@@ -34,7 +34,9 @@ datasetInfo = (
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-    'file:/afs/cern.ch/work/s/steggema/FCE1353C-6E70-E311-A1CB-008CFA000F5C.root'
+#    'file:/afs/cern.ch/work/s/steggema/FCE1353C-6E70-E311-A1CB-008CFA000F5C.root'
+#    'file:/data1/steggema/VBF125_13TeV_RAWSIMTEST_25ns_PFSIMTEST_CLUSTERCLEAN_500.root'
+     'file:/data1/steggema/VBF125_13TeV_RAWSIMTEST_25ns_PFSIMTEST_CLUSTERCLEAN_20PU_ALL.root'
     )
 )
 

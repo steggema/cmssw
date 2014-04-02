@@ -83,22 +83,24 @@ def bookLepton( tree, pName ):
     var(tree, '{pName}_relIso05'.format(pName=pName))
     var(tree, '{pName}_dxy'.format(pName=pName))
     var(tree, '{pName}_dz'.format(pName=pName))
-    var(tree, '{pName}_weight'.format(pName=pName))
-    var(tree, '{pName}_triggerWeight'.format(pName=pName))
-    var(tree, '{pName}_triggerEffData'.format(pName=pName))
-    var(tree, '{pName}_triggerEffMC'.format(pName=pName))
-    var(tree, '{pName}_recEffWeight'.format(pName=pName))
+
+    # var(tree, '{pName}_weight'.format(pName=pName))
+    # var(tree, '{pName}_triggerWeight'.format(pName=pName))
+    # var(tree, '{pName}_triggerEffData'.format(pName=pName))
+    # var(tree, '{pName}_triggerEffMC'.format(pName=pName))
+    # var(tree, '{pName}_recEffWeight'.format(pName=pName))
 
 def fillLepton( tree, pName, lepton ):
     fillParticle(tree, pName, lepton )
     fill(tree, '{pName}_relIso05'.format(pName=pName), lepton.relIsoAllChargedDB05() )
     fill(tree, '{pName}_dxy'.format(pName=pName), lepton.dxy() )
     fill(tree, '{pName}_dz'.format(pName=pName), lepton.dz() )
-    fill(tree, '{pName}_weight'.format(pName=pName), lepton.weight )
-    fill(tree, '{pName}_triggerWeight'.format(pName=pName), lepton.triggerWeight )
-    fill(tree, '{pName}_triggerEffData'.format(pName=pName), lepton.triggerEffData )
-    fill(tree, '{pName}_triggerEffMC'.format(pName=pName), lepton.triggerEffMC )
-    fill(tree, '{pName}_recEffWeight'.format(pName=pName), lepton.recEffWeight )
+
+    # fill(tree, '{pName}_weight'.format(pName=pName), lepton.weight )
+    # fill(tree, '{pName}_triggerWeight'.format(pName=pName), lepton.triggerWeight )
+    # fill(tree, '{pName}_triggerEffData'.format(pName=pName), lepton.triggerEffData )
+    # fill(tree, '{pName}_triggerEffMC'.format(pName=pName), lepton.triggerEffMC )
+    # fill(tree, '{pName}_recEffWeight'.format(pName=pName), lepton.recEffWeight )
 
 
 # muon
@@ -109,12 +111,49 @@ def bookMuon( tree, pName ):
     var(tree, '{pName}_mvaIso'.format(pName=pName))
     var(tree, '{pName}_looseId'.format(pName=pName))
     var(tree, '{pName}_tightId'.format(pName=pName))
+    var(tree, '{pName}_chargedHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_chargedAllIso04'.format(pName=pName))
+    var(tree, '{pName}_puChargedHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_neutralHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_photonIso04'.format(pName=pName))
+
+    var(tree, '{pName}_NchargedHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_NchargedAllIso04'.format(pName=pName))
+    var(tree, '{pName}_NpuChargedHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_NneutralHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_NphotonIso04'.format(pName=pName))
+
+    var(tree, '{pName}_MaxchargedHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_MaxchargedAllIso04'.format(pName=pName))
+    var(tree, '{pName}_MaxpuChargedHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_MaxneutralHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_MaxphotonIso04'.format(pName=pName))
 
 def fillMuon( tree, pName, muon ):
     fillLepton(tree, pName, muon)
     fill(tree, '{pName}_mvaIso'.format(pName=pName), muon.mvaIso() )
     fill(tree, '{pName}_looseId'.format(pName=pName), muon.looseId() )
     fill(tree, '{pName}_tightId'.format(pName=pName), muon.tightId() )
+
+    fill(tree, '{pName}_chargedHadronIso04'.format(pName=pName), muon.chargedHadronIso(0.4))
+    fill(tree, '{pName}_chargedAllIso04'.format(pName=pName), muon.chargedAllIso(0.4))
+    fill(tree, '{pName}_puChargedHadronIso04'.format(pName=pName), muon.puChargedHadronIso(0.4))
+    fill(tree, '{pName}_neutralHadronIso04'.format(pName=pName), muon.neutralHadronIso(0.4))
+    fill(tree, '{pName}_photonIso04'.format(pName=pName), muon.photonIso(0.4))
+
+    fill(tree, '{pName}_NchargedHadronIso04'.format(pName=pName), (muon.sourcePtr().isoDeposit(4)).countWithin(0.4, muon.chargedHadronVetos()))
+    fill(tree, '{pName}_NchargedAllIso04'.format(pName=pName), (muon.sourcePtr().isoDeposit(13)).countWithin(0.4, muon.chargedAllVetos()))
+    fill(tree, '{pName}_NpuChargedHadronIso04'.format(pName=pName), (muon.sourcePtr().isoDeposit(12)).countWithin(0.4, muon.puChargedHadronVetos()))
+    fill(tree, '{pName}_NneutralHadronIso04'.format(pName=pName), (muon.sourcePtr().isoDeposit(5)).countWithin(0.4, muon.neutralHadronVetos()))
+    fill(tree, '{pName}_NphotonIso04'.format(pName=pName), (muon.sourcePtr().isoDeposit(6)).countWithin(0.4, muon.photonVetos() ))
+
+    fill(tree, '{pName}_MaxchargedHadronIso04'.format(pName=pName), (muon.sourcePtr().isoDeposit(4)).maxWithin(0.4, muon.chargedHadronVetos()))
+    fill(tree, '{pName}_MaxchargedAllIso04'.format(pName=pName), (muon.sourcePtr().isoDeposit(13)).maxWithin(0.4, muon.chargedAllVetos()))
+    fill(tree, '{pName}_MaxpuChargedHadronIso04'.format(pName=pName), (muon.sourcePtr().isoDeposit(12)).maxWithin(0.4, muon.puChargedHadronVetos()))
+    fill(tree, '{pName}_MaxneutralHadronIso04'.format(pName=pName), (muon.sourcePtr().isoDeposit(5)).maxWithin(0.4, muon.neutralHadronVetos()))
+    fill(tree, '{pName}_MaxphotonIso04'.format(pName=pName), (muon.sourcePtr().isoDeposit(6)).maxWithin(0.4, muon.photonVetos() ))
+
+    # import pdb; pdb.set_trace()
 
 
 # electron
@@ -129,7 +168,11 @@ def bookEle( tree, pName ):
     var(tree, '{pName}_tightId'.format(pName=pName))
     var(tree, '{pName}_numberOfMissingHits'.format(pName=pName))
     var(tree, '{pName}_passConversionVeto'.format(pName=pName))
-    
+    var(tree, '{pName}_chargedHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_chargedAllIso04'.format(pName=pName))
+    var(tree, '{pName}_puChargedHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_neutralHadronIso04'.format(pName=pName))
+    var(tree, '{pName}_photonIso04'.format(pName=pName))
 
 def fillEle( tree, pName, ele ):
     fillLepton(tree, pName, ele)
@@ -140,11 +183,17 @@ def fillEle( tree, pName, ele ):
     fill(tree, '{pName}_tightId'.format(pName=pName), ele.tightIdForEleTau() )
     fill(tree, '{pName}_numberOfMissingHits'.format(pName=pName), ele.numberOfHits() )
     fill(tree, '{pName}_passConversionVeto'.format(pName=pName), ele.passConversionVeto() )
+    fill(tree, '{pName}_chargedHadronIso04'.format(pName=pName), ele.chargedHadronIso(0.4))
+    fill(tree, '{pName}_chargedAllIso04'.format(pName=pName), ele.chargedAllIso()) # updated veto cones in HTauTauEle
+    fill(tree, '{pName}_puChargedHadronIso04'.format(pName=pName), ele.puChargedHadronIso(0.4))
+    fill(tree, '{pName}_neutralHadronIso04'.format(pName=pName), ele.neutralHadronIso(0.4))
+    fill(tree, '{pName}_photonIso04'.format(pName=pName), ele.photonIso())# updated veto cones in HTauTauEle
 
 # tau 
 
 def bookTau( tree, pName ):
     bookLepton(tree, pName )
+    var(tree, '{pName}_decayModeFinding'.format(pName=pName))
     var(tree, '{pName}_veryLooseIso'.format(pName=pName))
     var(tree, '{pName}_looseIso'.format(pName=pName))
     var(tree, '{pName}_mediumIso'.format(pName=pName))
@@ -177,8 +226,14 @@ def bookTau( tree, pName ):
     var(tree, '{pName}_mass'.format(pName=pName))
     var(tree, '{pName}_zImpact'.format(pName=pName))
 
+    var(tree, '{pName}_genVisPt'.format(pName=pName))
+    var(tree, '{pName}_genVisEta'.format(pName=pName))
+    var(tree, '{pName}_genVisPhi'.format(pName=pName))
+    var(tree, '{pName}_genVisMass'.format(pName=pName))
+
 def fillTau( tree, pName, tau ):
     fillLepton(tree, pName, tau)
+    fill(tree, '{pName}_decayModeFinding'.format(pName=pName), tau.tauID("decayModeFinding"))
     fill(tree, '{pName}_veryLooseIso'.format(pName=pName),
          tau.tauID("byVLooseCombinedIsolationDeltaBetaCorr"))
     fill(tree, '{pName}_looseIso'.format(pName=pName),
@@ -239,6 +294,12 @@ def fillTau( tree, pName, tau ):
     fill(tree, '{pName}_zImpact'.format(pName=pName),
          tau.zImpact())
 
+    if hasattr(tau, 'genVisP4'):
+        fill(tree, '{pName}_genVisPt'.format(pName=pName), tau.genVisP4.pt())
+        fill(tree, '{pName}_genVisEta'.format(pName=pName), tau.genVisP4.eta())
+        fill(tree, '{pName}_genVisPhi'.format(pName=pName), tau.genVisP4.phi())
+        fill(tree, '{pName}_genVisMass'.format(pName=pName), tau.genVisP4.mass())
+
 # jet
 
 def bookJet( tree, pName ):
@@ -248,9 +309,15 @@ def bookJet( tree, pName ):
     var(tree, '{pName}_puMvaSimple'.format(pName=pName))
     var(tree, '{pName}_puMvaCutBased'.format(pName=pName))
     var(tree, '{pName}_looseJetId'.format(pName=pName))
-    var(tree, '{pName}_btagMVA'.format(pName=pName))
+    # var(tree, '{pName}_btagMVA'.format(pName=pName))
     var(tree, '{pName}_area'.format(pName=pName))
     var(tree, '{pName}_genJetPt'.format(pName=pName))
+    var(tree, '{pName}_puJetIdPassed'.format(pName=pName))
+    var(tree, '{pName}_pfJetIdPassed'.format(pName=pName))
+    var(tree, '{pName}_partonFlavour'.format(pName=pName))
+    var(tree, '{pName}_CHfraction'.format(pName=pName))
+    var(tree, '{pName}_PHfraction'.format(pName=pName))
+    var(tree, '{pName}_NHfraction'.format(pName=pName))
 
 def fillJet( tree, pName, jet ):
     fillParticle(tree, pName, jet )
@@ -259,10 +326,16 @@ def fillJet( tree, pName, jet ):
     fill(tree, '{pName}_puMvaSimple'.format(pName=pName), jet.puMva('simple'))
     fill(tree, '{pName}_puMvaCutBased'.format(pName=pName), jet.puMva('cut-based'))
     fill(tree, '{pName}_looseJetId'.format(pName=pName), jet.looseJetId())
-    fill(tree, '{pName}_btagMVA'.format(pName=pName), jet.btagMVA)
+    # fill(tree, '{pName}_btagMVA'.format(pName=pName), jet.btagMVA)
     fill(tree, '{pName}_area'.format(pName=pName), jet.jetArea())
     if hasattr(jet, 'genJet') and jet.genJet:
         fill(tree, '{pName}_genJetPt'.format(pName=pName), jet.genJet.pt())
+    fill(tree, '{pName}_puJetIdPassed'.format(pName=pName), jet.puJetIdPassed)
+    fill(tree, '{pName}_pfJetIdPassed'.format(pName=pName), jet.pfJetIdPassed)
+    fill(tree, '{pName}_partonFlavour'.format(pName=pName), jet.partonFlavour())
+    fill(tree, '{pName}_CHfraction'.format(pName=pName), jet.component(1).fraction())
+    fill(tree, '{pName}_PHfraction'.format(pName=pName), jet.component(4).fraction())
+    fill(tree, '{pName}_NHfraction'.format(pName=pName), jet.component(5).fraction())
 
 # vbf
 
