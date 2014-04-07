@@ -1,0 +1,5 @@
+<lcgdict>
+  <class name="BTagSF"/>
+  <class name="FSRWeightAlgo"/>
+  <class name="TriggerBitChecker" transient="true" />
+</lcgdict>

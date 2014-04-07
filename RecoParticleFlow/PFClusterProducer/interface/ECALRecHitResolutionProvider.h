@@ -43,6 +43,35 @@ double timeResolution(double energy)
   
 }
 
+double timeResolution2(double energy)
+{
+  double res2 = 10000.;
+
+  if (energy <= 0.)
+    return res2;
+  else if (energy < threshLowE_)
+  {
+    if (corrTermLowE_ > 0.) {// different parametrisation
+      const double res = noiseTermLowE_/energy + corrTermLowE_/(energy*energy);
+      res2 = res*res;
+    }
+    else {
+      const double noiseDivE = noiseTermLowE_/energy;
+      res2 = noiseDivE*noiseDivE + constantTermLowE_*constantTermLowE_;
+    }
+  }
+  else if (energy < threshHighE_) {
+    const double noiseDivE = noiseTerm_/energy;
+    res2 = noiseDivE*noiseDivE + constantTerm_*constantTerm_;
+  }
+  else // if (energy >=threshHighE_)
+    res2 = resHighE_*resHighE_;
+
+  if (res2 > 10000.)
+    return 10000.;
+  return res2;
+  
+}
 private:
 
   double noiseTerm_; // Noise term
