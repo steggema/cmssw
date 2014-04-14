@@ -21,7 +21,7 @@ def findFirstAncestor(dataset_id, info):
     else:
         parent_id = rows[0][0]
         groups = ['tauMu_fullsel_tree_CMG', 'tauMu_fullsel_tree', 'tauEle_fullsel_tree_CMG',
-                  'tauEle_fullsel_tree', 'diTau_fullsel_tree_CMG', 'diTau_fullsel_tree','cmgTuple', 'PFAOD', 'reco_notime'] 
+                  'tauEle_fullsel_tree', 'diTau_fullsel_tree_CMG', 'diTau_fullsel_tree','cmgTuple', 'PFAOD', 'reco_notime', 'reco_3sigmacut', 'reco_3sigmaneighbour', 'reco_nochi2', 'reco_timeFromSeed', 'reco'] 
         igroup = 0
         while 1:
             #import pdb ; pdb.set_trace()
@@ -278,6 +278,7 @@ def connectSample(components, row, filePattern, aliases, cache, verbose):
     file_owner = row[2]
     info = []
     compName = findAlias(path_name, aliases)
+    print compName, path_name, file_owner
     #import pdb ; pdb.set_trace()
     if compName is None:
         print 'WARNING: cannot find alias for', path_name

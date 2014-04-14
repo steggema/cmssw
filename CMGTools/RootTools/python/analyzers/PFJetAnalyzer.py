@@ -8,6 +8,23 @@ from CMGTools.RootTools.physicsobjects.PhysicsObjects import GenParticle
 from CMGTools.RootTools.utils.DeltaR import deltaR2
 from CMGTools.RootTools.utils.cmsswRelease import isNewerThan
 
+def getFinal(p):
+    if p.numberOfDaughters() == 1 and p.daughter(0).pdgId() == p.pdgId():
+        return getFinal(p.daughter(0))
+    if p.numberOfDaughters() == 2 and p.daughter(0).pdgId() == p.pdgId() and p.daughter(1).pdgId() in [21, 22]:
+        return getFinal(p.daughter(0))
+    if p.numberOfDaughters() == 2 and p.daughter(1).pdgId() == p.pdgId() and p.daughter(0).pdgId() in [21, 22]:
+        return getFinal(p.daughter(1))
+    return p
+
+def isFinal(p):
+    if (p.numberOfDaughters() == 1 and p.daughter(0).pdgId() == p.pdgId()) or (
+        p.numberOfDaughters() == 2 and p.daughter(0).pdgId() == p.pdgId() and p.daughter(1).pdgId() in [21, 22]) or (
+        p.numberOfDaughters() == 2 and p.daughter(1).pdgId() == p.pdgId() and p.daughter(0).pdgId() in [21, 22]):
+        return False
+
+    return True
+
 class PFJetAnalyzer( Analyzer ):
     """Analyze jets ;-)
 
@@ -109,28 +126,30 @@ class PFJetAnalyzer( Analyzer ):
 
 
         genParticles = self.mchandles['genParticles'].product()
-        event.genParticles = map( GenParticle, genParticles)
+        # event.genParticles = map( GenParticle, genParticles)
+        event.genParticles = genParticles
 
         # event.genParticlesTop = [p.getFinal() for p in event.genParticles if p.mother() and 
             # (abs(p.mother().pdgId())==6 or abs(p.mother().pdgId())==24) and p.status() in range(21, 30) and abs(p.pdgId()) != 24]
 
-        topsWs = [p.getFinal() for p in event.genParticles if abs(p.pdgId()) in [6, 24] and p.status() in range(21, 30)]
+        topsWsZs = [p for p in event.genParticles if abs(p.pdgId()) in [6, 23, 24] and isFinal(p)]
 
         event.genParticlesTop = []
-        for top in topsWs:
+        for top in topsWsZs:
             for i in range(top.numberOfDaughters()):
-                 d = GenParticle(top.daughter(i))
-                 event.genParticlesTop.append(d.getFinal())
+                 # d = GenParticle(top.daughter(i))
+                 # event.genParticlesTop.append(d.getFinal())
+                 event.genParticlesTop.append(getFinal(top.daughter(i)))
 
 
 
-        print 'Top and W daughters', [(p.pdgId(), p.eta(), p.status()) for p in event.genParticlesTop]
+        print 'Top, W, Z daughters', [(p.pdgId(), p.eta(), p.status()) for p in event.genParticlesTop]
         # print 'Top stati', [p.getFinal().status() for p in event.genParticles if abs(p.pdgId()) == 6 and p.status() in range(21, 30)]
 
         for gen in event.genParticlesTop:
             for jet in event.cleanJets:
                 dR = deltaR2(jet.eta(), jet.phi(), gen.eta(), gen.phi() )
-                if dR<0.25:
+                if dR<0.25*0.25:
                     if hasattr(jet, 'matchGenPartons'):
                         jet.matchGenPartons.append(gen) # for merging
                     else:
@@ -138,21 +157,21 @@ class PFJetAnalyzer( Analyzer ):
                         jet.matchGenPartons = [gen]
                     if not hasattr(gen, 'jet'):
                         gen.jet = jet
-                        print 'Attaching jet', gen.pdgId(), gen.status()
 
-        for gen in event.genParticles:
-            if abs(gen.pdgId()) == 24 and gen.numberOfDaughters() == 2:  # W boson
-                jets = []
-                for i in range(0, gen.numberOfDaughters()):
-                    daughter = GenParticle(gen.daughter(i)).getFinal()
-                    print 'Found W daughter', daughter.pdgId(), daughter.status()
-                    if abs(daughter.pdgId()) in [1,2,3,4,5] and hasattr(daughter, 'jet'):
-                        jets.append(daughter.jet)
-                        print 'Has a matched jet'
-                if len(jets) == 2:
-                    event.wmass = (jets[0].p4() + jets[1].p4()).mass()
-                    print 'Reconstruct W', event.wmass
-
+        genWs = [w for w in event.genParticles if isFinal(w) and abs(w.pdgId()) == 24]
+        for gen in genWs:
+            jets = []
+            for i in range(0, gen.numberOfDaughters()):
+                daughter = getFinal(gen.daughter(i))
+                if abs(daughter.pdgId()) in [1,2,3,4,5]:
+                    for jet in event.cleanJets:
+                        if deltaR2(jet.eta(), jet.phi(), daughter.eta(), daughter.phi() ) < 0.25*0.25:
+                            jets.append(jet)
+                # if abs(daughter.pdgId()) in [1,2,3,4,5] and hasattr(daughter, 'jet'):
+                    
+            if len(jets) == 2:
+                event.wmass = (jets[0].p4() + jets[1].p4()).mass()
+                print 'W mass reco', event.wmass
 
         
         if len( event.jets )>=2:

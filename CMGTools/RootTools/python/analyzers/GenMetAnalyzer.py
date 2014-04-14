@@ -4,10 +4,31 @@ from CMGTools.RootTools.physicsobjects.PhysicsObjects import  GenParticle
 
 from ROOT import Math
 
+class DummyP4:
+    def __init__(self):
+        pass
+    def pt(self):
+        return 0.
+    def px(self):
+        return 0.
+    def py(self):
+        return 0.
+    def phi(self):
+        return 0.
+    def eta(self):
+        return 0.
+
+def getFinal(p):
+    if p.numberOfDaughters() == 1 and p.daughter(0).pdgId() == p.pdgId():
+        return getFinal(p.daughter(0))
+    return p
+def isFinal(p):
+    return not (p.numberOfDaughters() == 1 and p.daughter(0).pdgId() == p.pdgId())
+
 def p4suminvis(particles):
     particles = [p for p in particles if abs(p.pdgId()) in [12, 14, 16]]
     if not particles:
-        return 0. # no neutrino
+        return DummyP4() # no neutrino
     p4 = particles[-1].p4()
     particles.pop()
     for p in particles:
@@ -80,8 +101,8 @@ class GenMetAnalyzer( Analyzer ):
                 genParticles = self.mchandles['genParticles'].product()
                 event.genParticles = map( GenParticle, genParticles)
             # finalParticles = [p for p in event.genParticles if p.numberOfDaughters() == 0]
-            finalParticles = [p for p in event.genParticles if p.status() in range(21, 30)]
-            event.genMet = p4suminvis(finalParticles)
+            finalParticles = [p for p in event.genParticles if isFinal(p)]
+            event.partonMet = p4suminvis(finalParticles)
 
 
         return True

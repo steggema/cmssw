@@ -24,12 +24,16 @@ class METTreeProducer( TreeAnalyzerNumpy ):
         var( tr, 'partonMet_phi')
 
         var( tr, 'wmass')
+        var( tr, 'zmass_muon')
+        var( tr, 'zmass_ele')
+        var(tr, 'njets')
 
     def process(self, iEvent, event):
         
         tr = self.tree
         tr.reset()
-        
+
+        fill( tr, 'njets', len(event.cleanJets))
         fill( tr, 'met_pt', event.met.pt())
         fill( tr, 'met_px', event.met.px())
         fill( tr, 'met_py', event.met.py())
@@ -48,6 +52,10 @@ class METTreeProducer( TreeAnalyzerNumpy ):
 
         if hasattr(event, 'wmass'):
             fill(tr, 'wmass', event.wmass)
+        if hasattr(event, 'zmass_muon'):
+            fill( tr, 'zmass_muon', event.zmass_muon)
+        if hasattr(event, 'zmass_ele'):
+            fill( tr, 'zmass_ele', event.zmass_ele)
         
 
         self.tree.tree.Fill()

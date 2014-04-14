@@ -3,6 +3,9 @@ from CMGTools.RootTools.fwlite.AutoHandle import AutoHandle
 from CMGTools.RootTools.physicsobjects.PhysicsObjects import Muon, GenParticle
 from CMGTools.RootTools.utils.DeltaR import matchObjectCollection, deltaR
 
+def isFinal(p):
+    return not (p.numberOfDaughters() == 1 and p.daughter(0).pdgId() == p.pdgId())
+
 def deltaRObj(obj1, obj2):
     return deltaR(obj1.eta(), obj1.phi(), obj2.eta(), obj2.phi())
 
@@ -49,13 +52,16 @@ class MuonAnalyzer( Analyzer ):
         if self.cfg_comp.isMC:
             # print event.eventId
             
-            if not hasattr(event, 'genParticles'):
+            if not hasattr(event, 'genParticlesTop'):
                 genParticles = self.mchandles['genParticles'].product()
                 event.genParticles = map( GenParticle, genParticles)
+                genParticles = [p for p in event.genParticles if isFinal(p)]
+            else:
+                genParticles = event.genParticlesTop
             # Allow Higgs/Z/photon/W
             # allowedGenMothers = [6, 15, 21, 23, 24, 25, 35, 36, 37]
-            allowedGenMothers = [6, 15, 24]
-            event.generatedMuons = [p for p in event.genParticles if abs(p.pdgId()) in self.cfg_ana.absGenIds and abs(p.mother().pdgId()) in allowedGenMothers and p.status() in range(21, 30)]
+            # allowedGenMothers = [6, 15, 24]
+            event.generatedMuons = [p for p in genParticles if abs(p.pdgId()) in self.cfg_ana.absGenIds]
 
             pairs = matchObjectCollection(event.muons, event.generatedMuons, self.cfg_ana.matchDeltaR)
 
@@ -69,6 +75,9 @@ class MuonAnalyzer( Analyzer ):
                     muon.genMatchDeltaR = pairs[muon], deltaRObj(muon, pairs[muon])
                     genMuon.recMuon = muon
 
+            if len(event.muons) > 1:
+                event.zmass_muon = (event.muons[0].p4() + event.muons[1].p4()).mass()
+
         return True
 
     def testMuonIso(self, muon, isocut ):
@@ -78,6 +87,10 @@ class MuonAnalyzer( Analyzer ):
         iso += max(0., - muon.pfIsolationR04().sumPUPt + 0.5 *(muon.pfIsolationR04().sumNeutralHadronEt +  muon.pfIsolationR04().sumPhotonEt))
         muon.iso = iso
         muon.relIso = iso/muon.pt()
+        isoNoNH = muon.pfIsolationR04().sumChargedParticlePt + muon.pfIsolationR04().sumPhotonEt
+        isoNoNH += max(0., - muon.pfIsolationR04().sumPUPt + 0.5 *( muon.pfIsolationR04().sumPhotonEt))
+        muon.isoNoNH = isoNoNH
+        muon.relIsoNoNH = isoNoNH/muon.pt()
         return iso/muon.pt() < isocut
 
         # return muon.relIsoAllChargedDB05()<isocut
