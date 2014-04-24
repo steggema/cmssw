@@ -18,7 +18,16 @@ aliases = {
     '/DYJetsToLL_M-50_13TeV.*3SIGMANEIGHBOUR':'DY3SigmaNeighbour',
     '/DYJetsToLL_M-50_13TeV.*ONLYTIMECUT':'DYTimeCutOnly',
     '/DYJetsToLL_M-50_13TeV.*NOTIME':'DYNoTime',
+    '/DYJetsToLL_M-50_13TeV.*MICHALIS':'DYMichalis',
     }
+
+DYMichalis = cfg.MCComponent(
+    name = 'DYMichalis',
+    files = [],
+    xSection = 400.0,
+    nGenEvents = 1,
+    triggers = [],
+    effCorrFactor = 1 )
 
 DY3SigmaCut = cfg.MCComponent(
     name = 'DY3SigmaCut',
@@ -135,10 +144,10 @@ TT3SigmaNeighbour = cfg.MCComponent(
 
 
 
-allsamples = [DY3SigmaCut, DY3SigmaNeighbour, DYTimeCutOnly, DYNoTime, DYTimeFromSeed, RelValTTTimeFromSeed, TTNoTime, TTChi2, TTNoChi2, TTTimeFromSeed, TTTimeCutOnly, TT3SigmaCut, TT3SigmaNeighbour]
+allsamples = [DYMichalis, DY3SigmaCut, DY3SigmaNeighbour, DYTimeCutOnly, DYNoTime, DYTimeFromSeed, RelValTTTimeFromSeed, TTNoTime, TTChi2, TTNoChi2, TTTimeFromSeed, TTTimeCutOnly, TT3SigmaCut, TT3SigmaNeighbour]
 
 connect( allsamples, '%PF71X%', 'reco.*root', aliases, cache=True, verbose=True)
 connect( [RelValTTNoTime], '%PFTIMERECO%', 'reco.*root', aliases, cache=True, verbose=True)
 allsamples = allsamples + [RelValTTNoTime]
 for c in allsamples:
-    c.splitFactor = 20# splitFactor(c, 5e4)
+    c.splitFactor = 50# splitFactor(c, 5e4)

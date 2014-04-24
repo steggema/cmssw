@@ -1,13 +1,10 @@
 from CMGTools.RootTools.fwlite.Analyzer import Analyzer
 from CMGTools.RootTools.fwlite.AutoHandle import AutoHandle
 from CMGTools.RootTools.physicsobjects.PhysicsObjects import PhysicsObject, GenParticle
-from CMGTools.RootTools.utils.DeltaR import matchObjectCollection, deltaR
+from CMGTools.RootTools.utils.DeltaR import matchObjectCollection
 
-def isFinal(p):
-    return not (p.numberOfDaughters() == 1 and p.daughter(0).pdgId() == p.pdgId())
+from CMGTools.RootTools.analyzers.MuonAnalyzer import deltaRObj, isFinal, getWeights
 
-def deltaRObj(obj1, obj2):
-    return deltaR(obj1.eta(), obj1.phi(), obj2.eta(), obj2.phi())
 
 def p4sumvis(particles):
     visparticles = [p for p in particles if abs(p.pdgId()) not in [12, 14, 16]]
@@ -126,6 +123,61 @@ class TauAnalyzer( Analyzer ):
         for tau in event.taus:
             if not hasattr(tau, 'chargedIso'):
                 import pdb; pdb.set_trace()
+
+        for tau in event.taus:
+            photons = tau.isolationPFGammaCands()
+            photonSum03 = 0.
+            photonSumAll = 0.
+
+            tau.phIsoDr = 0.
+            tau.phIsoDr2 = 0.
+            tau.phIsoDr201 = 0.
+            tau.phIsoPt = 0.
+            tau.phIsoLogPt = 0.
+            tau.phIsoPuppi = 0.
+            tau.phIsoPuppi05 = 0.
+            tau.phIsoPuppi05Dr2 = 0.
+            tau.phIsoPuppi05Log2 = 0.
+
+
+            for photon in photons:
+                photonSumAll += photon.get().pt()
+                if photon.get().pt() > 0.3:
+                    photonSum03 += photon.get().pt()
+                isoPt = photon.pt()
+                if photon.particleId() != 4:
+                    # It's an electron, associate to PV with full weight
+                    deltaZ = 100.
+                    if photon.trackRef().get():
+                        deltaZ = abs(event.goodVertices[0].z()-photon.trackRef().vertex().z())
+                    elif photon.gsfTrackRef().get():
+                        deltaZ = abs(event.goodVertices[0].z()-photon.gsfTrackRef().vertex().z())
+                    if deltaZ < 2.:
+                        tau.phIsoDr += isoPt
+                        tau.phIsoDr2 += isoPt
+                        tau.phIsoDr201 += isoPt
+                        tau.phIsoPuppi += isoPt
+                        tau.phIsoPt += isoPt
+                        tau.phIsoLogPt += isoPt
+                        tau.phIsoPuppi05 += isoPt
+                        tau.phIsoPuppi05Dr2 += isoPt
+                        tau.phIsoPuppi05Log2 += isoPt
+                else:
+                    getWeights(photon, event)
+                    
+                    tau.phIsoDr += isoPt * photon.deltaBetaWeightDr
+                    tau.phIsoDr2 += isoPt * photon.deltaBetaWeightDr2
+                    tau.phIsoDr201 += isoPt * photon.deltaBetaWeightDr201
+                    tau.phIsoPuppi += isoPt * photon.deltaBetaWeightPuppi
+                    tau.phIsoPt += isoPt * photon.deltaBetaWeightPt
+                    tau.phIsoLogPt += isoPt * photon.deltaBetaWeightLogPt
+                    tau.phIsoPuppi05 += isoPt * photon.deltaBetaWeightPuppi05
+                    tau.phIsoPuppi05Dr2 += isoPt * photon.deltaBetaWeightPuppi05Dr2
+                    tau.phIsoPuppi05Log2 += isoPt * photon.deltaBetaWeightPuppi05Log2
+
+            
+            tau.photonPtSum03 = photonSum03
+            tau.photonPtSumAll = photonSumAll
 
         if self.cfg_comp.isMC:
             # print event.eventId

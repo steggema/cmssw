@@ -79,10 +79,6 @@ class PFJetAnalyzer( Analyzer ):
         event.cleanJets = []
 
         leptons = []
-        # if hasattr(event, 'muons'):
-        #     leptons += event.muons
-        # if hasattr(event, 'electrons'):
-        #     leptons += event.electrons
 
         genJets = None
 
@@ -95,10 +91,17 @@ class PFJetAnalyzer( Analyzer ):
         
 
         genJets = map( GenJet, self.mchandles['genJets'].product() ) 
+
+        event.nPUJets = 0
+        event.nGoodJets = 0
         # Use DeltaR = 0.25 matching like JetMET
         pairs = matchObjectCollection( event.jets, genJets, 0.25*0.25)
         for jet in event.jets:
             jet.genJet = pairs[jet]
+            if pairs[jet] and pairs[jet].pt() > 8.:
+                event.nGoodJets += 1
+            else:
+                event.nPUJets += 1
             if pairs[jet] and not hasattr(pairs[jet], 'jet'):
                 pairs[jet].jet = jet
 
@@ -143,7 +146,7 @@ class PFJetAnalyzer( Analyzer ):
 
 
 
-        print 'Top, W, Z daughters', [(p.pdgId(), p.eta(), p.status()) for p in event.genParticlesTop]
+        # print 'Top, W, Z daughters', [(p.pdgId(), p.eta(), p.status()) for p in event.genParticlesTop]
         # print 'Top stati', [p.getFinal().status() for p in event.genParticles if abs(p.pdgId()) == 6 and p.status() in range(21, 30)]
 
         for gen in event.genParticlesTop:
@@ -171,7 +174,7 @@ class PFJetAnalyzer( Analyzer ):
                     
             if len(jets) == 2:
                 event.wmass = (jets[0].p4() + jets[1].p4()).mass()
-                print 'W mass reco', event.wmass
+                # print 'W mass reco', event.wmass
 
         
         if len( event.jets )>=2:
