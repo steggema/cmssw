@@ -153,6 +153,7 @@ void EcalDetailedTimeRecHitProducer::produce(edm::Event& evt, const edm::EventSe
         std::auto_ptr< EERecHitCollection > EEDetailedTimeRecHits( new EERecHitCollection );
 
 	GlobalPoint* vertex=0;
+    double vertexTime = 0.;
 
 	if (correctForVertexZPosition_)
 	  {
@@ -188,6 +189,7 @@ void EcalDetailedTimeRecHitProducer::produce(edm::Event& evt, const edm::EventSe
 			assert ((*VertexHandle)[0].vertexId() == 0);
 			const SimVertex* myVertex= &(*VertexHandle)[0];
 			vertex=new GlobalPoint(myVertex->position().x(),myVertex->position().y(),myVertex->position().z());
+            vertexTime = myVertex->position().t() * 1E9;
 		      }
 		  }
 		else {
@@ -209,7 +211,7 @@ void EcalDetailedTimeRecHitProducer::produce(edm::Event& evt, const edm::EventSe
 			  //Vertex corrected ToF
 			  if (vertex)
 			    {
-			      aHit.setTime(myTime+deltaTimeOfFlight(*vertex,(*it).id(),ebTimeLayer_));
+			      aHit.setTime(myTime - vertexTime  + deltaTimeOfFlight(*vertex,(*it).id(),ebTimeLayer_));
 			    }
 			  else
 			    //Uncorrected ToF
@@ -237,7 +239,7 @@ void EcalDetailedTimeRecHitProducer::produce(edm::Event& evt, const edm::EventSe
 			  //Vertex corrected ToF
 			  if (vertex)
 			    {
-			      aHit.setTime(myTime+deltaTimeOfFlight(*vertex,(*it).id(),eeTimeLayer_));
+			      aHit.setTime(myTime- vertexTime+deltaTimeOfFlight(*vertex,(*it).id(),eeTimeLayer_));
 			    }
 			  else
 			    //Uncorrected ToF
