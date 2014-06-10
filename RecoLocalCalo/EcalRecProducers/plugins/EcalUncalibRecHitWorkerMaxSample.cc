@@ -7,11 +7,16 @@
 #include "RecoLocalCalo/EcalRecProducers/plugins/EcalUncalibRecHitWorkerMaxSample.h"
 
 #include "DataFormats/Common/interface/Handle.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+
 
 #include "DataFormats/EcalDigi/interface/EcalDigiCollections.h"
 
 #include "DataFormats/EcalRecHit/interface/EcalUncalibratedRecHit.h"
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
+
+#include "CondFormats/DataRecord/interface/EcalGainRatiosRcd.h"
+#include "CondFormats/DataRecord/interface/EcalPedestalsRcd.h"
 
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -30,6 +35,8 @@ EcalUncalibRecHitWorkerMaxSample::EcalUncalibRecHitWorkerMaxSample(const edm::Pa
 void
 EcalUncalibRecHitWorkerMaxSample::set(const edm::EventSetup& es)
 {
+  es.get<EcalGainRatiosRcd>().get(gains);
+  es.get<EcalPedestalsRcd>().get(peds);
 }
 
 bool
@@ -40,11 +47,15 @@ EcalUncalibRecHitWorkerMaxSample::run( const edm::Event & evt,
         DetId detid(itdg->id());
 
         if ( detid.subdetId() == EcalBarrel ) {
-                result.push_back( ebAlgo_.makeRecHit(*itdg, 0, 0, 0, 0 ) );
+                const EcalPedestals::Item * aped = &peds->barrel(EBDetId(detid).hashedIndex());
+                const EcalMGPAGainRatio * aGain  = &gains->barrel(EBDetId(detid).hashedIndex());
+                result.push_back( ebAlgo_.makeRecHit(*itdg, aped, aGain) );
         } else {
-                result.push_back( eeAlgo_.makeRecHit(*itdg, 0, 0, 0, 0 ) );
+                const EcalPedestals::Item * aped = &peds->endcap(EEDetId(detid).hashedIndex());
+                const EcalMGPAGainRatio * aGain  = &gains->endcap(EEDetId(detid).hashedIndex());          
+                result.push_back( eeAlgo_.makeRecHit(*itdg, aped, aGain) );
         }
-
+            
         return true;
 }
 
