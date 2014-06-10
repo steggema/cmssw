@@ -11,6 +11,7 @@ import FWCore.ParameterSet.Config as cms
 from RecoLocalCalo.EcalRecProducers.ecalRecHitTPGConditions_cff import *
 #ECAL reconstruction
 from RecoLocalCalo.EcalRecProducers.ecalGlobalUncalibRecHit_cfi import *
+from RecoLocalCalo.EcalRecProducers.ecalMaxSampleUncalibRecHit_cfi import *
 from RecoLocalCalo.EcalRecProducers.ecalRecHit_cfi import *
 from RecoLocalCalo.EcalRecProducers.ecalPreshowerRecHit_cfi import *
 from RecoLocalCalo.EcalRecProducers.ecalDetIdToBeRecovered_cfi import *
@@ -18,8 +19,11 @@ from RecoLocalCalo.EcalRecProducers.ecalCompactTrigPrim_cfi import *
 from RecoLocalCalo.EcalRecProducers.ecalTPSkim_cfi import *
 
 
-ecalUncalibRecHitSequence = cms.Sequence(ecalGlobalUncalibRecHit*
-                                         ecalDetIdToBeRecovered)
+#ecalUncalibRecHitSequence = cms.Sequence(ecalGlobalUncalibRecHit*
+#                                         ecalDetIdToBeRecovered)
+
+ecalUncalibRecHitSequence = cms.Sequence(ecalMaxSampleUncalibRecHit*
+                                         ecalDetIdToBeRecovered)                                         
 
 ecalRecHitSequence        = cms.Sequence(ecalRecHit*
                                          ecalCompactTrigPrim*
