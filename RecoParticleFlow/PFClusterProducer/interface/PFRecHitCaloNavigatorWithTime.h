@@ -56,6 +56,9 @@ class PFRecHitCaloNavigatorWithTime : public PFRecHitNavigatorBase {
       DetId SW(0);
       DetId SE(0);
 
+      // Associate multiple hits in time
+      associateNeighbour(detid, hit, hits, refProd, 0, 0);
+
 
       N=navigator.north();  
       associateNeighbour(N,hit,hits,refProd,0,1);
@@ -128,7 +131,7 @@ class PFRecHitCaloNavigatorWithTime : public PFRecHitNavigatorBase {
 					 const reco::PFRecHit& b){
 					return a.detId() < b.detId();
 				      });
-    if( found_hit != hits->end() && found_hit->detId() == id.rawId() ) {
+    if( found_hit != hits->end() && found_hit->detId() == id.rawId() && found_hit->detId() != hit.detId() ) {
       if (_timeResolutionCalc) {
         sigma2 = _timeResolutionCalc->timeResolution2(hit.energy()) + _timeResolutionCalc->timeResolution2(found_hit->energy());
       }

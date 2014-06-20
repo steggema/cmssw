@@ -46,7 +46,7 @@ _localMaxSeeds_ECAL = cms.PSet(
               seedingThresholdPt = cms.double(0.0)
               )
     ),
-    nNeighbours = cms.int32(8)
+    nNeighbours = cms.int32(-1)
 )
 
 # topo clusterizer
@@ -108,7 +108,7 @@ _pfClusterizerWithTime_ECAL = cms.PSet(
     maxIterations = cms.uint32(50),
     excludeOtherSeeds = cms.bool(True),
     minFracTot = cms.double(1e-20), ## numerical stabilization
-    maxNSigmaTime = cms.double(10.), # Maximum number of sigmas in time 
+    maxNSigmaTime = cms.double(1.), # Maximum number of sigmas in time 
     minChi2Prob = cms.double(0.), # Minimum chi2 probability (ignored if 0)
     clusterTimeResFromSeed = cms.bool(False),
     recHitEnergyNorms = cms.VPSet(
@@ -119,8 +119,8 @@ _pfClusterizerWithTime_ECAL = cms.PSet(
               recHitEnergyNorm = cms.double(0.3)
               )
     ),
-    timeResolutionCalcBarrel = _timeResolutionECALBarrel,
-    timeResolutionCalcEndcap = _timeResolutionECALEndcap,
+    # timeResolutionCalcBarrel = _timeResolutionECALBarrel,
+    # timeResolutionCalcEndcap = _timeResolutionECALEndcap,
 )
 
 #energy corrector for corrected cluster producer

@@ -12,17 +12,21 @@ particleFlowRecHitECALWithTime = cms.EDProducer("PFRecHitProducer",
         name = cms.string("PFRecHitECALNavigatorWithTime"),
         barrel = cms.PSet(
              noiseLevel = cms.double(0.042),   
-             noiseTerm  = cms.double(27.5),
-             constantTerm = cms.double(10),
-             sigmaCut = cms.double(5.0),
-             timeResolutionCalc = _timeResolutionECALBarrel
+             # noiseTerm  = cms.double(27.5),
+             noiseTerm  = cms.double(0.),
+             constantTerm = cms.double(15),
+             sigmaCut = cms.double(2.0),
+             # timeResolutionCalc = _timeResolutionECALBarrel
+             
         ),
         endcap = cms.PSet(
              noiseLevel = cms.double(0.14),   
-             noiseTerm  = cms.double(36.1),
-             constantTerm = cms.double(10),
-             sigmaCut = cms.double(5.0),
-             timeResolutionCalc = _timeResolutionECALEndcap
+             # noiseTerm  = cms.double(36.1),
+             noiseTerm  = cms.double(0.),
+             constantTerm = cms.double(15),
+             sigmaCut = cms.double(2.0),
+             # timeResolutionCalc = _timeResolutionECALEndcap
+             
         )
     ),
     producers = cms.VPSet(

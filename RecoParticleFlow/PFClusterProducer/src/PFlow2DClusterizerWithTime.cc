@@ -311,11 +311,22 @@ void PFlow2DClusterizerWithTime::clusterTimeResolutionFromSeed(reco::PFCluster&
       bool isBarrel = (rh.layer() == PFLayer::HCAL_BARREL1 ||
        rh.layer() == PFLayer::HCAL_BARREL2 ||
        rh.layer() == PFLayer::ECAL_BARREL);
-     if (isBarrel)
-       clusterRes2 = _timeResolutionCalcBarrel->timeResolution2(rh.energy());
-     else
-       clusterRes2 = _timeResolutionCalcEndcap->timeResolution2(rh.energy());
+      if (isBarrel)
+      {
+        if (_timeResolutionCalcBarrel)
+          clusterRes2 = _timeResolutionCalcBarrel->timeResolution2(rh.energy());
+        else
+          clusterRes2 = rh.time()*rh.time()/_timeSigma_eb;
+      }
+      else
+      {
+        if (_timeResolutionCalcEndcap)
+          clusterRes2 = _timeResolutionCalcEndcap->timeResolution2(rh.energy());
+        else
+          clusterRes2 = rh.time()*rh.time()/_timeSigma_ee;
+      }
     }
+    break;
   }
 }
 
@@ -338,9 +349,19 @@ void PFlow2DClusterizerWithTime::clusterTimeResolution(reco::PFCluster& cluster,
       rh.layer() == PFLayer::ECAL_BARREL);
     double res2 = 10000.;
     if (isBarrel)
-      res2 = _timeResolutionCalcBarrel->timeResolution2(rh.energy());
+    {
+      if (_timeResolutionCalcBarrel)
+        res2 = _timeResolutionCalcBarrel->timeResolution2(rh.energy());
+      else
+        res2 = rh.time()*rh.time()/_timeSigma_eb;
+    }
     else
-      res2 = _timeResolutionCalcEndcap->timeResolution2(rh.energy());
+    {
+      if (_timeResolutionCalcEndcap)
+        res2 = _timeResolutionCalcEndcap->timeResolution2(rh.energy());
+      else
+        res2 = rh.time()*rh.time()/_timeSigma_ee;
+    }
 
     sumTimeSigma2 += rhf_f * rh.time()/res2;
     sumSigma2 += rhf_f/res2;
@@ -369,7 +390,7 @@ double PFlow2DClusterizerWithTime::dist2Time(const reco::PFCluster& cluster,
         refhit->energy());
     }
     else {
-      return t2/_timeSigma_eb;
+      res2 = _timeSigma_eb;
     }
   }
   else if (cell_layer == PFLayer::HCAL_ENDCAP ||
@@ -382,7 +403,7 @@ double PFlow2DClusterizerWithTime::dist2Time(const reco::PFCluster& cluster,
         refhit->energy());
     }
      else {
-      return t2/_timeSigma_ee;
+      res2 = _timeSigma_ee;
     }
   }
 
