@@ -21,7 +21,7 @@ def findFirstAncestor(dataset_id, info):
     else:
         parent_id = rows[0][0]
         groups = ['tauMu_fullsel_tree_CMG', 'tauMu_fullsel_tree', 'tauEle_fullsel_tree_CMG',
-                  'tauEle_fullsel_tree', 'diTau_fullsel_tree_CMG', 'diTau_fullsel_tree','cmgTuple', 'PFAOD', 'reco_notime', 'reco_3sigmacut', 'reco_3sigmaneighbour', 'reco_nochi2', 'reco_timeFromSeed', 'reco'] 
+                  'tauEle_fullsel_tree', 'diTau_fullsel_tree_CMG', 'diTau_fullsel_tree','cmgTuple', 'PFAOD', 'reco_notime', 'reco_3sigmacut', 'reco_3sigmaneighbour', 'reco_nochi2', 'reco_timeFromSeed', 'reco', 'recoTestData_noTime', 'recoTestData', 'recoTestData_timeCuts'] 
         igroup = 0
         while 1:
             #import pdb ; pdb.set_trace()
