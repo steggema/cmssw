@@ -12,31 +12,43 @@ patTauJetCorrFactors = cms.EDProducer("TauJetCorrFactorsProducer",
     # for reco::CaloTaus, for which no decay mode reconstruction has been implemented yet,
     # 'other' is taken for all tau-jet candidates
     parameters = cms.VPSet(
-        cms.PSet(
-            payload    = cms.string('AK5tauHPSlooseCombDBcorrOneProng0Pi0'),
-            decayModes = cms.vstring('%i' % tauToOneProng0PiZero)
-        ),
-        cms.PSet(
-            payload    = cms.string('AK5tauHPSlooseCombDBcorrOneProng1Pi0'),
-            decayModes = cms.vstring('%i' % tauToOneProng1PiZero)
-        ),
-        cms.PSet(
-            payload    = cms.string('AK5tauHPSlooseCombDBcorrOneProng2Pi0'),
-            decayModes = cms.vstring('%i' % tauToOneProng2PiZero)
-        ),
-        cms.PSet(
-            payload    = cms.string('AK5tauHPSlooseCombDBcorrThreeProng0Pi0'),
-            decayModes = cms.vstring('%i' % tauToThreeProng0PiZero)
-        ),
-        cms.PSet(
-            payload    = cms.string('AK5tauHPSlooseCombDBcorr'),
-            decayModes = cms.vstring('*')
-        )
+       cms.PSet(
+           payload    = cms.string('AK5tauHPSlooseCombDBcorrOneProng0Pi0'),
+           decayModes = cms.vstring('%i' % tauToOneProng0PiZero)
+       ),
+       cms.PSet(
+           payload    = cms.string('AK5tauHPSlooseCombDBcorrOneProng1Pi0'),
+           decayModes = cms.vstring('%i' % tauToOneProng1PiZero)
+       ),
+       cms.PSet(
+           payload    = cms.string('AK5tauHPSlooseCombDBcorrOneProng2Pi0'),
+           decayModes = cms.vstring('%i' % tauToOneProng2PiZero)
+       ),
+       cms.PSet(
+           payload    = cms.string('AK5tauHPSlooseCombDBcorrTwoProng0Pi0'),
+           decayModes = cms.vstring('%i' % tauToTwoProng0PiZero)
+       ),
+       cms.PSet(
+           payload    = cms.string('AK5tauHPSlooseCombDBcorrTwoProng1Pi0'),
+           decayModes = cms.vstring('%i' % tauToTwoProng1PiZero)
+       ),
+       cms.PSet(
+           payload    = cms.string('AK5tauHPSlooseCombDBcorrThreeProng0Pi0'),
+           decayModes = cms.vstring('%i' % tauToThreeProng0PiZero)
+       ),
+       cms.PSet(
+           payload    = cms.string('AK5tauHPSlooseCombDBcorrThreeProng1Pi0'),
+           decayModes = cms.vstring('%i' % tauToThreeProng1PiZero)
+       ),
+       cms.PSet(
+           payload    = cms.string('AK5tauHPSlooseCombDBcorr'),                                            
+           decayModes = cms.vstring('*')
+       )
     ),
     # correction levels
     levels = cms.vstring(
         # tags for the individual jet corrections;
         # when not available the string should be set to 'none'
-        'L2Relative', 'L3Absolute'
+        "L2Relative" # CV: this needs to be updated to account for the fact that L2+L3 corrections are determined together, using a single fit of recTauPt/genVisTauPt
     )
 )

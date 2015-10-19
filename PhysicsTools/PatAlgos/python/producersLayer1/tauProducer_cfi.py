@@ -29,7 +29,7 @@ patTaus = cms.EDProducer("PATTauProducer",
     ),
 
     # jet energy corrections
-    addTauJetCorrFactors = cms.bool(False),
+    addTauJetCorrFactors = cms.bool(True),
     tauJetCorrFactorsSource = cms.VInputTag(cms.InputTag("patTauJetCorrFactors")),
 
     # embedding objects (for Calo- and PFTaus)
