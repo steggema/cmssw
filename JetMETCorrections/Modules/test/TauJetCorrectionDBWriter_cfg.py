@@ -10,21 +10,32 @@ process.maxEvents = cms.untracked.PSet(
 
 process.load('CondCore.DBCommon.CondDBCommon_cfi')
 
-process.CondDBCommon.connect = 'sqlite_file:TauJec11_V1.db'
+process.CondDBCommon.connect = 'sqlite_file:TauJecSpring15_V1.db'
+
+# payloads = [
+#     # generic tau-jet energy corrections parameters,
+#     # not specific to any reconstructed tau decay mode 
+#     'AK5tauHPSlooseCombDBcorr',
+#     # tau-jet energy corrections parameters specific to one-prong, no pi0 decay mode
+#     'AK5tauHPSlooseCombDBcorrOneProng0Pi0',
+#     # tau-jet energy corrections parameters specific to one-prong, one pi0 decay mode
+#     'AK5tauHPSlooseCombDBcorrOneProng1Pi0',
+#     # tau-jet energy corrections parameters specific to one-prong, two pi0 decay mode
+#     'AK5tauHPSlooseCombDBcorrOneProng2Pi0',
+#     # tau-jet energy corrections parameters specific to three-prong, no pi0 decay mode
+#     'AK5tauHPSlooseCombDBcorrThreeProng0Pi0'
+# ]    
 
 payloads = [
-    # generic tau-jet energy corrections parameters,
-    # not specific to any reconstructed tau decay mode 
-    'AK5tauHPSlooseCombDBcorr',
-    # tau-jet energy corrections parameters specific to one-prong, no pi0 decay mode
-    'AK5tauHPSlooseCombDBcorrOneProng0Pi0',
-    # tau-jet energy corrections parameters specific to one-prong, one pi0 decay mode
-    'AK5tauHPSlooseCombDBcorrOneProng1Pi0',
-    # tau-jet energy corrections parameters specific to one-prong, two pi0 decay mode
-    'AK5tauHPSlooseCombDBcorrOneProng2Pi0',
-    # tau-jet energy corrections parameters specific to three-prong, no pi0 decay mode
-    'AK5tauHPSlooseCombDBcorrThreeProng0Pi0'
-]    
+   'AK5tauHPSlooseCombDBcorr',
+   'AK5tauHPSlooseCombDBcorrOneProng0Pi0',
+   'AK5tauHPSlooseCombDBcorrOneProng1Pi0',
+   'AK5tauHPSlooseCombDBcorrOneProng2Pi0',
+   'AK5tauHPSlooseCombDBcorrTwoProng0Pi0',
+   'AK5tauHPSlooseCombDBcorrTwoProng1Pi0',
+   'AK5tauHPSlooseCombDBcorrThreeProng0Pi0',
+   'AK5tauHPSlooseCombDBcorrThreeProng1Pi0'
+] 
 
 process.dbWriterSequence = cms.Sequence()
 
@@ -41,7 +52,7 @@ for payload in payloads:
 
     PoolDBOutputService_toPut.append(cms.PSet(
         record = cms.string(payload),
-        tag    = cms.string('JetCorrectorParametersCollection_TauJec11_V1_%s' % payload), 
+        tag    = cms.string('JetCorrectorParametersCollection_TauJecSpring15_V1_%s' % payload), 
         label  = cms.string(payload)
     ))
 
