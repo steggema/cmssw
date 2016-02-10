@@ -25,8 +25,10 @@ miniAOD_customizeMC(process)
 from PhysicsTools.PatAlgos.patInputFiles_cff import filesRelValTTbarPileUpGENSIMRECO
 process.source.fileNames = filesRelValTTbarPileUpGENSIMRECO
 
+process.source.fileNames = cms.untracked.vstring('/store/mc/RunIISpring15DR74//DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/AODSIM/Asympt25ns_MCRUN2_74_V9-v1/50000/F22CE653-1037-E511-A23F-0002C92A1030.root')
+
 #                                         ##
-process.maxEvents.input = 100
+process.maxEvents.input = 10000
 #                                         ##
 process.out.outputCommands = process.MicroEventContentMC.outputCommands
 from PhysicsTools.PatAlgos.slimming.miniAOD_tools import miniAOD_customizeOutput

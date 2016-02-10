@@ -49,6 +49,6 @@ patTauJetCorrFactors = cms.EDProducer("TauJetCorrFactorsProducer",
     levels = cms.vstring(
         # tags for the individual jet corrections;
         # when not available the string should be set to 'none'
-        "L2Relative" # CV: this needs to be updated to account for the fact that L2+L3 corrections are determined together, using a single fit of recTauPt/genVisTauPt
+        "L3Absolute" # CV: this needs to be updated to account for the fact that L2+L3 corrections are determined together, using a single fit of recTauPt/genVisTauPt
     )
 )
