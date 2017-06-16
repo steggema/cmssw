@@ -32,7 +32,12 @@ class TauDecayModes( object ):
 
     def intToName( self, anInt ):
         '''Returns the decay mode name corresponding to an int.'''
-        return self.decayModes[ anInt ]
+        try:
+            return self.decayModes[ anInt ]
+        except KeyError:
+            # print 'Key', anInt, 'not found in', self.decayModes, 'returning kNull'
+            pass
+        return self.decayModes[-1]
 
     def nameToInt( self, aName ):
         '''Returns the decay mode int corresponding to a name.'''
@@ -131,7 +136,7 @@ class TauDecayModes( object ):
                 return "kThreeProng3PiZero"
             else:
                 return "kThreeProngNPiZero"
-
+                
         return "kRareDecayMode"
 
 tauDecayModes = TauDecayModes()
