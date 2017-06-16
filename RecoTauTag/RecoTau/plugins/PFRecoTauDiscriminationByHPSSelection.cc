@@ -266,6 +266,7 @@ PFRecoTauDiscriminationByHPSSelection::discriminate(const reco::PFTauRef& tau) c
   
   // Check if tau passes cone cut
   double cone_size = tau->signalConeSize();
+  cone_size *= 1./(1. - std::min(stripsP4.pt()/tauP4.pt(), 0.65));
   // Check if any charged objects fail the signal cone cut
   for (auto const& cand : tau->signalTauChargedHadronCandidates()) {
     if ( verbosity_ ) {
