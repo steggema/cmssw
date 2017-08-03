@@ -17,7 +17,7 @@ namespace reco { namespace tau {
 
 // Get the highest pt track in a jet.
 // Get the KF track if it exists.  Otherwise, see if it has a GSF track.
-reco::TrackBaseRef RecoTauVertexAssociator::getLeadTrack(const PFJet& jet) const
+reco::TrackBaseRef RecoTauVertexAssociator::getLeadTrack(const Jet& jet) const
 {
   std::vector<PFCandidatePtr> chargedPFCands = pfChargedCands(jet, true);
   if ( verbosity_ >= 1 ) {
@@ -229,23 +229,113 @@ void RecoTauVertexAssociator::setEvent(const edm::Event& evt)
   }
   edm::EventNumber_t currentEvent = evt.id().event();
   if ( currentEvent != lastEvent_ || !jetToVertexAssociation_ ) {
-    if ( !jetToVertexAssociation_ ) jetToVertexAssociation_ = new std::map<const reco::PFJet*, reco::VertexRef>;
+    if ( !jetToVertexAssociation_ ) jetToVertexAssociation_ = new std::map<const reco::Jet*, reco::VertexRef>;
     else jetToVertexAssociation_->clear();
     lastEvent_ = currentEvent;
   }
 }
 
 reco::VertexRef
-RecoTauVertexAssociator::associatedVertex(const PFTau& tau) const 
+RecoTauVertexAssociator::associatedVertex(const PFTau& tau, bool useJet) const 
 {
-  reco::PFJetRef jetRef = tau.jetRef();
+
+  if ( !useJet ) {
+    if ( tau.leadPFChargedHadrCand().isNonnull() ) {
+      if ( tau.leadPFChargedHadrCand()->trackRef().isNonnull() )
+	return associatedVertex( reco::TrackBaseRef( tau.leadPFChargedHadrCand()->trackRef() ) );
+      else if (  tau.leadPFChargedHadrCand()->gsfTrackRef().isNonnull() )
+	return associatedVertex( reco::TrackBaseRef( tau.leadPFChargedHadrCand()->gsfTrackRef() ) );
+    }
+  }
+  // MB: use vertex associated to a given jet if explicitely requested or in case of missing leading track
+  reco::JetRef jetRef = tau.jetRef();
   // FIXME workaround for HLT which does not use updated data format
   if ( jetRef.isNull() ) jetRef = tau.pfTauTagInfoRef()->pfjetRef();
   return associatedVertex(*jetRef);
 }
 
 reco::VertexRef
-RecoTauVertexAssociator::associatedVertex(const PFJet& jet) const 
+RecoTauVertexAssociator::associatedVertex(const TrackBaseRef& track) const 
+{
+
+  reco::VertexRef trkVertex = ( selectedVertices_.size() > 0 ) ? selectedVertices_[0] : reco::VertexRef();
+
+  if ( algo_ == kHighestPtInEvent ) {
+    if ( selectedVertices_.size() > 0 ) trkVertex = selectedVertices_[0];
+  } else if ( algo_ == kClosestDeltaZ ) {
+    if ( track.isNonnull() ) {
+      double closestDistance = 1.e+6;
+      DZtoTrack dzComputer(track);
+      // Find the vertex that has the lowest dZ to the track
+      int idxVertex = 0;
+      for ( std::vector<reco::VertexRef>::const_iterator selectedVertex = selectedVertices_.begin();
+	    selectedVertex != selectedVertices_.end(); ++selectedVertex ) {
+	double dZ = dzComputer(*selectedVertex);
+	if ( verbosity_ ) {
+	  std::cout << "vertex #" << idxVertex << ": x = " << (*selectedVertex)->position().x() << ", y = " << (*selectedVertex)->position().y() << ", z = " << (*selectedVertex)->position().z() 
+		    << " --> dZ = " << dZ << std::endl;
+	}
+	if ( dZ < closestDistance ) {
+	  trkVertex = (*selectedVertex);
+	  closestDistance = dZ;
+	}
+	++idxVertex;
+      }
+    }
+  } else if ( algo_ == kHighestWeigtForLeadTrack || algo_ == kCombined ) {
+    if ( track.isNonnull() ) {
+      double largestWeight = -1.;
+      // Find the vertex that has the highest association probability to the track
+      TrackWeightInVertex weightComputer(track);
+      int idxVertex = 0;
+      for ( std::vector<reco::VertexRef>::const_iterator selectedVertex = selectedVertices_.begin();
+	    selectedVertex != selectedVertices_.end(); ++selectedVertex ) {
+	double weight = weightComputer(*selectedVertex);
+	if ( verbosity_ ) {
+	  std::cout << "vertex #" << idxVertex << ": x = " << (*selectedVertex)->position().x() << ", y = " << (*selectedVertex)->position().y() << ", z = " << (*selectedVertex)->position().z() 
+		    << " --> weight = " << weight << std::endl;
+	}
+	if ( weight > largestWeight ) {
+	  trkVertex = (*selectedVertex);
+	  largestWeight = weight;
+	}
+	++idxVertex;
+      }
+      // the weight was never larger than zero
+      if ( algo_ == kCombined && largestWeight < 1.e-7 ) {
+	if ( verbosity_ ) {
+	  std::cout << "No vertex had positive weight! Trying dZ instead... " << std::endl;
+	}
+	double closestDistance = 1.e+6;
+	DZtoTrack dzComputer(track);
+	// Find the vertex that has the lowest dZ to the leading track
+	int idxVertex = 0;
+	for ( std::vector<reco::VertexRef>::const_iterator selectedVertex = selectedVertices_.begin();
+	      selectedVertex != selectedVertices_.end(); ++selectedVertex ) {
+	  double dZ = dzComputer(*selectedVertex);
+	  if ( verbosity_ ) {
+	    std::cout << "vertex #" << idxVertex << ": x = " << (*selectedVertex)->position().x() << ", y = " << (*selectedVertex)->position().y() << ", z = " << (*selectedVertex)->position().z() 
+		      << " --> dZ = " << dZ << std::endl;
+	  }
+	  if ( dZ < closestDistance ) {
+	    trkVertex = (*selectedVertex);
+	    closestDistance = dZ;
+	  }
+	  ++idxVertex;
+	}
+      }
+    }
+  }
+
+  if ( verbosity_ >= 1 ) {
+    std::cout << "--> returning vertex: x = " << trkVertex->position().x() << ", y = " << trkVertex->position().y() << ", z = " << trkVertex->position().z() << std::endl;
+  }
+  
+  return trkVertex;
+}
+
+reco::VertexRef
+RecoTauVertexAssociator::associatedVertex(const Jet& jet) const 
 {
   if ( verbosity_ >= 1 ) {
     std::cout << "<RecoTauVertexAssociator::associatedVertex>:" << std::endl;
@@ -258,17 +348,19 @@ RecoTauVertexAssociator::associatedVertex(const PFJet& jet) const
   }
 
   reco::VertexRef jetVertex = ( selectedVertices_.size() > 0 ) ? selectedVertices_[0] : reco::VertexRef();
-  const PFJet* jetPtr = &jet;
+  const Jet* jetPtr = &jet;
 
   // check if jet-vertex association has been determined for this jet before
-  std::map<const reco::PFJet*, reco::VertexRef>::iterator vertexPtr = jetToVertexAssociation_->find(jetPtr);
+  std::map<const reco::Jet*, reco::VertexRef>::iterator vertexPtr = jetToVertexAssociation_->find(jetPtr);
   if ( vertexPtr != jetToVertexAssociation_->end() ) {
     jetVertex = vertexPtr->second;
   } else {
     // no jet-vertex association exists for this jet yet, compute it!
     if ( algo_ == kHighestPtInEvent ) {
       if ( selectedVertices_.size() > 0 ) jetVertex = selectedVertices_[0];
-    } else if ( algo_ == kClosestDeltaZ ) {
+    } else if ( algo_ == kClosestDeltaZ || 
+		algo_ == kHighestWeigtForLeadTrack || 
+		algo_ == kCombined ) {
       // find "leading" (highest Pt) track in jet
       reco::TrackBaseRef leadTrack = getLeadTrack(jet);
       if ( verbosity_ ) {
@@ -276,75 +368,11 @@ RecoTauVertexAssociator::associatedVertex(const PFJet& jet) const
 	else std::cout << "leadTrack: N/A" << std::endl;
       }
       if ( leadTrack.isNonnull() ) {
-	double closestDistance = 1.e+6;
-	DZtoTrack dzComputer(leadTrack);
-	// Find the vertex that has the lowest dZ to the leading track
-	int idxVertex = 0;
-	for ( std::vector<reco::VertexRef>::const_iterator selectedVertex = selectedVertices_.begin();
-	      selectedVertex != selectedVertices_.end(); ++selectedVertex ) {
-	  double dZ = dzComputer(*selectedVertex);
-	  if ( verbosity_ ) {
-	    std::cout << "vertex #" << idxVertex << ": x = " << (*selectedVertex)->position().x() << ", y = " << (*selectedVertex)->position().y() << ", z = " << (*selectedVertex)->position().z() 
-		      << " --> dZ = " << dZ << std::endl;
-	  }
-	  if ( dZ < closestDistance ) {
-	    jetVertex = (*selectedVertex);
-	    closestDistance = dZ;
-	  }
-	  ++idxVertex;
-	}
-      }
-    } else if ( algo_ == kHighestWeigtForLeadTrack || algo_ == kCombined ) {
-      reco::TrackBaseRef leadTrack = getLeadTrack(jet);
-      if ( verbosity_ ) {
-	if ( leadTrack.isNonnull() ) std::cout << "leadTrack: Pt = " << leadTrack->pt() << ", eta = " << leadTrack->eta() << ", phi = " << leadTrack->phi() << std::endl;
-	else std::cout << "leadTrack: N/A" << std::endl;
-      }
-      if ( leadTrack.isNonnull() ) {
-	double largestWeight = -1.;
-	// Find the vertex that has the highest association probability to the leading track
-	TrackWeightInVertex weightComputer(leadTrack);
-	int idxVertex = 0;
-	for ( std::vector<reco::VertexRef>::const_iterator selectedVertex = selectedVertices_.begin();
-	      selectedVertex != selectedVertices_.end(); ++selectedVertex ) {
-	  double weight = weightComputer(*selectedVertex);
-	  if ( verbosity_ ) {
-	    std::cout << "vertex #" << idxVertex << ": x = " << (*selectedVertex)->position().x() << ", y = " << (*selectedVertex)->position().y() << ", z = " << (*selectedVertex)->position().z() 
-		      << " --> weight = " << weight << std::endl;
-	  }
-	  if ( weight > largestWeight ) {
-	    jetVertex = (*selectedVertex);
-	    largestWeight = weight;
-	  }
-	  ++idxVertex;
-	}
-	// the weight was never larger than zero
-	if ( algo_ == kCombined && largestWeight < 1.e-7 ) {
-	  if ( verbosity_ ) {
-	    std::cout << "No vertex had positive weight! Trying dZ instead... " << std::endl;
-	  }
-	  double closestDistance = 1.e+6;
-	  DZtoTrack dzComputer(leadTrack);
-	  // Find the vertex that has the lowest dZ to the leading track
-	  int idxVertex = 0;
-	  for ( std::vector<reco::VertexRef>::const_iterator selectedVertex = selectedVertices_.begin();
-		selectedVertex != selectedVertices_.end(); ++selectedVertex ) {
-	    double dZ = dzComputer(*selectedVertex);
-	    if ( verbosity_ ) {
-	      std::cout << "vertex #" << idxVertex << ": x = " << (*selectedVertex)->position().x() << ", y = " << (*selectedVertex)->position().y() << ", z = " << (*selectedVertex)->position().z() 
-			<< " --> dZ = " << dZ << std::endl;
-	    }
-	    if ( dZ < closestDistance ) {
-	      jetVertex = (*selectedVertex);
-	      closestDistance = dZ;
-	    }
-	    ++idxVertex;
-	  }
-	}
+	jetVertex = associatedVertex(leadTrack);
       }
     }
     
-    jetToVertexAssociation_->insert(std::pair<const PFJet*, reco::VertexRef>(jetPtr, jetVertex));
+    jetToVertexAssociation_->insert(std::pair<const Jet*, reco::VertexRef>(jetPtr, jetVertex));
   }
 
   if ( verbosity_ >= 1 ) {
