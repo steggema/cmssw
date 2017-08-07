@@ -67,14 +67,19 @@ class RecoTauPiZeroProducer : public edm::stream::EDProducer<> {
       outputSelector_;
 
     //consumes interface
-    edm::EDGetTokenT<reco::CandidateView> cand_token;
+    edm::EDGetTokenT<reco::JetView> cand_token;
+
+    double minJetPt_;
+    double maxJetAbsEta_;
 
     int verbosity_;
 };
 
 RecoTauPiZeroProducer::RecoTauPiZeroProducer(const edm::ParameterSet& pset) 
 {
-  cand_token = consumes<reco::CandidateView>( pset.getParameter<edm::InputTag>("jetSrc"));
+  cand_token = consumes<reco::JetView>( pset.getParameter<edm::InputTag>("jetSrc"));
+  minJetPt_ = ( pset.exists("minJetPt") ) ? pset.getParameter<double>("minJetPt") : -1.0;
+  maxJetAbsEta_ = ( pset.exists("maxJetAbsEta") ) ? pset.getParameter<double>("maxJetAbsEta") : 99.0;
 
   typedef std::vector<edm::ParameterSet> VPSet;
   // Get the mass hypothesis for the pizeros
@@ -124,7 +129,7 @@ RecoTauPiZeroProducer::RecoTauPiZeroProducer(const edm::ParameterSet& pset)
 void RecoTauPiZeroProducer::produce(edm::Event& evt, const edm::EventSetup& es) 
 {
   // Get a view of our jets via the base candidates
-  edm::Handle<reco::CandidateView> jetView;
+  edm::Handle<reco::JetView> jetView;
   evt.getByToken(cand_token, jetView);
 
   // Give each of our plugins a chance at doing something with the edm::Event
@@ -136,19 +141,21 @@ void RecoTauPiZeroProducer::produce(edm::Event& evt, const edm::EventSetup& es)
   reco::PFJetRefVector jetRefs =
       reco::tau::castView<reco::PFJetRefVector>(jetView);
   // Make our association
-  std::auto_ptr<reco::JetPiZeroAssociation> association;
+  std::unique_ptr<reco::JetPiZeroAssociation> association;
 
   if (jetRefs.size()) {
-    edm::Handle<reco::PFJetCollection> pfJetCollectionHandle;
-    evt.get(jetRefs.id(), pfJetCollectionHandle);
-    association.reset(
-        new reco::JetPiZeroAssociation(reco::PFJetRefProd(pfJetCollectionHandle)));
+    // edm::Handle<reco::PFJetCollection> pfJetCollectionHandle;
+    // evt.get(jetRefs.id(), pfJetCollectionHandle);
+    association = std::make_unique<reco::JetPiZeroAssociation>(reco::JetRefBaseProd(jetView));
   } else {
-    association.reset(new reco::JetPiZeroAssociation);
+    association = std::make_unique<reco::JetPiZeroAssociation>();
   }
 
   // Loop over our jets
   BOOST_FOREACH(const reco::PFJetRef& jet, jetRefs) {
+
+    if(jet->pt() - minJetPt_ < 1e-5) continue;
+    if(std::abs(jet->eta()) - maxJetAbsEta_ > -1e-5) continue;
     // Build our global list of RecoTauPiZero
     PiZeroList dirtyPiZeros;
 
@@ -225,7 +232,7 @@ void RecoTauPiZeroProducer::produce(edm::Event& evt, const edm::EventSetup& es)
     }
     association->setValue(jet.key(), cleanPiZeros);
   }
-  evt.put(association);
+  evt.put(std::move(association));
 }
 
 // Print some helpful information
