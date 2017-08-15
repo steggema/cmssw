@@ -1,5 +1,5 @@
 /*
- * RecoTauBuilderConePlugin
+ * RecoTauBuilderGenericConePlugin
  *
  * Build a PFTau using cones defined in DeltaR.
  *
@@ -20,6 +20,7 @@
 #include "RecoTauTag/RecoTau/interface/RecoTauCrossCleaning.h"
 
 #include "DataFormats/TauReco/interface/PFTau.h"
+#include "DataFormats/TauReco/interface/PFBaseTau.h"
 #include "DataFormats/TauReco/interface/PFRecoTauChargedHadron.h"
 #include "DataFormats/TauReco/interface/RecoTauPiZero.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
@@ -30,13 +31,14 @@
 namespace reco { namespace tau {
 
 typedef std::vector<RecoTauPiZero> PiZeroList;
-  
-class RecoTauBuilderConePlugin : public RecoTauBuilderPlugin {
+
+template<class TauType, class PFType, class PFInTauType>
+class RecoTauBuilderGenericConePlugin : public RecoTauBuilderPlugin<TauType, PFType> {
   public:
-  explicit RecoTauBuilderConePlugin(const edm::ParameterSet& pset,edm::ConsumesCollector &&iC);
-    ~RecoTauBuilderConePlugin() {}
+  explicit RecoTauBuilderGenericConePlugin(const edm::ParameterSet& pset,edm::ConsumesCollector &&iC);
+    ~RecoTauBuilderGenericConePlugin() {}
     // Build a tau from a jet
-    return_type operator()(const reco::JetBaseRef& jet,
+    typename reco::tau::RecoTauBuilderPlugin<TauType, PFType>::return_type operator()(const reco::JetBaseRef& jet,
 	const std::vector<reco::PFRecoTauChargedHadron>& chargedHadrons,
         const std::vector<RecoTauPiZero>& piZeros,
         const std::vector<CandidatePtr>& regionalExtras) const override;
@@ -55,16 +57,27 @@ class RecoTauBuilderConePlugin : public RecoTauBuilderPlugin {
     JetFunc signalConeChargedHadrons_;
     JetFunc isoConeChargedHadrons_;
     JetFunc signalConePiZeros_;
+    StringObjectFunction<TauType> signalConeSizeToStore_;
     JetFunc isoConePiZeros_;
     JetFunc signalConeNeutralHadrons_;
     JetFunc isoConeNeutralHadrons_;
 
     int maxSignalConeChargedHadrons_;
+    double minAbsPhotonSumPt_insideSignalCone_;
+    double minRelPhotonSumPt_insideSignalCone_;
+
+    void setTauQuantities(TauType& aTau,
+			  double minAbsPhotonSumPt_insideSignalCone = 2.5,
+			  double minRelPhotonSumPt_insideSignalCone = 0.,
+			  double minAbsPhotonSumPt_outsideSignalCone = 1.e+9,
+			  double minRelPhotonSumPt_outsideSignalCone = 1.e+9) const;
+
 };
 
 // ctor - initialize all of our variables
-RecoTauBuilderConePlugin::RecoTauBuilderConePlugin(
-						   const edm::ParameterSet& pset, edm::ConsumesCollector &&iC):RecoTauBuilderPlugin(pset,std::move(iC)),
+template<class TauType, class PFType, class PFInTauType>
+RecoTauBuilderGenericConePlugin<TauType, PFType, PFInTauType>::RecoTauBuilderGenericConePlugin(
+						   const edm::ParameterSet& pset, edm::ConsumesCollector &&iC):RecoTauBuilderPlugin<TauType, PFType>(pset,std::move(iC)),
     qcuts_(pset.getParameterSet(
           "qualityCuts").getParameterSet("signalQualityCuts")),
     usePFLeptonsAsChargedHadrons_(pset.getParameter<bool>("usePFLeptons")),
@@ -76,6 +89,8 @@ RecoTauBuilderConePlugin::RecoTauBuilderConePlugin(
         pset.getParameter<std::string>("isoConeChargedHadrons")),
     signalConePiZeros_(
         pset.getParameter<std::string>("signalConePiZeros")),
+    signalConeSizeToStore_(//MB: stored inside PFTau and used to compte photon-pt-out-of-signal-cone and DM hypothsis
+	pset.getParameter<std::string>("signalConePiZeros")),
     isoConePiZeros_(
         pset.getParameter<std::string>("isoConePiZeros")),
     signalConeNeutralHadrons_(
@@ -83,7 +98,12 @@ RecoTauBuilderConePlugin::RecoTauBuilderConePlugin(
     isoConeNeutralHadrons_(
         pset.getParameter<std::string>("isoConeNeutralHadrons")), 
     maxSignalConeChargedHadrons_(
-        pset.getParameter<int>("maxSignalConeChargedHadrons")) 				 
+        pset.getParameter<int>("maxSignalConeChargedHadrons")),
+    minAbsPhotonSumPt_insideSignalCone_(
+        pset.getParameter<double>("minAbsPhotonSumPt_insideSignalCone")),
+    minRelPhotonSumPt_insideSignalCone_(
+	pset.getParameter<double>("minRelPhotonSumPt_insideSignalCone"))
+
 {}
 
 namespace xclean 
@@ -107,24 +127,89 @@ namespace xclean
   }
 }
 
-RecoTauBuilderConePlugin::return_type RecoTauBuilderConePlugin::operator()(
+template<class TauType, class PFType, class PFInTauType>
+void RecoTauBuilderGenericConePlugin<TauType, PFType, PFInTauType>::setTauQuantities(TauType& aTau,
+						double minAbsPhotonSumPt_insideSignalCone,
+						double minRelPhotonSumPt_insideSignalCone,
+						double minAbsPhotonSumPt_outsideSignalCone,
+						double minRelPhotonSumPt_outsideSignalCone) const {
+  //MB: Set tau quantities which are computed by RecoTauConstructor<TauType, PFType, PFInTauType>::get() 
+  //    method with PFRecoTauChargedHadrons not used here
+  
+  // Set charge
+  int charge = 0;
+  int leadCharge = aTau.leadPFChargedHadrCand().isNonnull() ? aTau.leadPFChargedHadrCand()->charge() : 0;
+  const auto& pfChs = aTau.signalPFChargedHadrCands();
+  for(const auto& pfCh : pfChs){
+    charge += pfCh->charge();
+  }
+  charge = charge==0 ? leadCharge : charge;
+  aTau.setCharge(charge);
+  
+  // Set PDG id
+  aTau.setPdgId(aTau.charge() < 0 ? 15 : -15); 
+  
+  // Set Decay Mode
+  typename TauType::hadronicDecayMode dm = TauType::kNull; 
+  unsigned int nPiZeros = 0;
+  const std::vector<RecoTauPiZero>& piZeros = aTau.signalPiZeroCandidates();
+  for(const RecoTauPiZero& piZero : piZeros) {
+    double photonSumPt_insideSignalCone = 0.;
+    double photonSumPt_outsideSignalCone = 0.;
+    int numPhotons = piZero.numberOfDaughters();
+    for(int idxPhoton = 0; idxPhoton < numPhotons; ++idxPhoton) {
+      const reco::Candidate* photon = piZero.daughter(idxPhoton);
+      double dR = deltaR(photon->p4(), aTau.p4());
+      if(dR < aTau.signalConeSize() ){
+	photonSumPt_insideSignalCone += photon->pt();
+      } else {
+	photonSumPt_outsideSignalCone += photon->pt();
+      }
+    }
+    if( photonSumPt_insideSignalCone  > minAbsPhotonSumPt_insideSignalCone  || photonSumPt_insideSignalCone  > (minRelPhotonSumPt_insideSignalCone*aTau.pt())  ||
+	photonSumPt_outsideSignalCone > minAbsPhotonSumPt_outsideSignalCone || photonSumPt_outsideSignalCone > (minRelPhotonSumPt_outsideSignalCone*aTau.pt()) ) ++nPiZeros;
+  }
+  // Find the maximum number of PiZeros our parameterization can hold
+  const unsigned int maxPiZeros = TauType::kOneProngNPiZero;
+  // Determine our track index
+  unsigned int nCharged = pfChs.size();
+  if(nCharged>0){
+    unsigned int trackIndex = (nCharged - 1)*(maxPiZeros + 1);
+    // Check if we handle the given number of tracks
+    if(trackIndex >= TauType::kRareDecayMode) 
+      dm = TauType::kRareDecayMode;    
+    else
+      dm = static_cast<typename TauType::hadronicDecayMode>(trackIndex + std::min(nPiZeros,maxPiZeros) );
+  }
+  else{
+    dm = TauType::kNull;
+  }
+  aTau.setDecayMode(dm);
+  return;
+}
+
+template<class TauType, class PFType, class PFInTauType>
+typename RecoTauBuilderPlugin<TauType, PFType>::return_type RecoTauBuilderGenericConePlugin<TauType, PFType, PFInTauType>::operator()(
     const reco::JetBaseRef& jet,
     const std::vector<reco::PFRecoTauChargedHadron>& chargedHadrons, 
     const std::vector<RecoTauPiZero>& piZeros,
     const std::vector<CandidatePtr>& regionalExtras) const {
-  //std::cout << "<RecoTauBuilderConePlugin::operator()>:" << std::endl;
+  //std::cout << "<RecoTauBuilderGenericConePlugin::operator()>:" << std::endl;
   //std::cout << " jet: Pt = " << jet->pt() << ", eta = " << jet->eta() << ", phi = " << jet->phi() << std::endl;
 
   // Get access to our cone tools
   using namespace cone;
   // Define output.  We only produce one tau per jet for the cone algo.
-  output_type output;
+  typename RecoTauBuilderPlugin<TauType, PFType>::output_type output;
 
   // Our tau builder - the true indicates to automatically copy gamma candidates
   // from the pizeros.
-  RecoTauConstructor tau(jet, getPFCands(), true);
+  RecoTauConstructor<TauType, PFType, PFInTauType> tau(jet, this->getPFCands(), true, 
+			 &signalConeSizeToStore_, 
+			 minAbsPhotonSumPt_insideSignalCone_, 
+			 minRelPhotonSumPt_insideSignalCone_);
   // Setup our quality cuts to use the current vertex (supplied by base class)
-  qcuts_.setPV(primaryVertex(jet));
+  qcuts_.setPV(this->primaryVertex(jet));
 
   typedef std::vector<CandidatePtr> CandPtrs;
 
@@ -303,12 +388,12 @@ RecoTauBuilderConePlugin::return_type RecoTauBuilderConePlugin::operator()(
   CandPtrs::const_iterator isolationPFCHs_end = isolationPFCHs.end();
 
   // Build signal charged hadrons
-  tau.addPFCands(RecoTauConstructor::kSignal,
-                 RecoTauConstructor::kChargedHadron,
+  tau.addPFCands(RecoTauConstructor<TauType, PFType, PFInTauType>::kSignal,
+                 RecoTauConstructor<TauType, PFType, PFInTauType>::kChargedHadron,
                  signalPFCHs_begin, signalPFCHs_end);
 
-  tau.addPFCands(RecoTauConstructor::kSignal,
-                 RecoTauConstructor::kNeutralHadron,
+  tau.addPFCands(RecoTauConstructor<TauType, PFType, PFInTauType>::kSignal,
+                 RecoTauConstructor<TauType, PFType, PFInTauType>::kNeutralHadron,
                  boost::make_filter_iterator(
                    xclean::makePredicateAND(signalConePFNHFilter, pfCandXCleaner),
                    pfnhs.begin(), pfnhs.end()),
@@ -317,20 +402,20 @@ RecoTauBuilderConePlugin::return_type RecoTauBuilderConePlugin::operator()(
                    pfnhs.end(), pfnhs.end()));
 
   // Build signal PiZeros
-  tau.addPiZeros(RecoTauConstructor::kSignal,
+  tau.addPiZeros(RecoTauConstructor<TauType, PFType, PFInTauType>::kSignal,
                  PiZeroDRFilterIter(signalConePiZeroFilter,
                                     cleanPiZeros.begin(), cleanPiZeros.end()),
                  PiZeroDRFilterIter(signalConePiZeroFilter,
                                     cleanPiZeros.end(), cleanPiZeros.end()));
 
   // Build isolation charged hadrons
-  tau.addPFCands(RecoTauConstructor::kIsolation,
-                 RecoTauConstructor::kChargedHadron,
+  tau.addPFCands(RecoTauConstructor<TauType, PFType, PFInTauType>::kIsolation,
+                 RecoTauConstructor<TauType, PFType, PFInTauType>::kChargedHadron,
 		 isolationPFCHs_begin, isolationPFCHs_end);
 
   // Add all the stuff in the isolation cone that wasn't in the jet constituents
-  tau.addPFCands(RecoTauConstructor::kIsolation,
-                 RecoTauConstructor::kChargedHadron,
+  tau.addPFCands(RecoTauConstructor<TauType, PFType, PFInTauType>::kIsolation,
+                 RecoTauConstructor<TauType, PFType, PFInTauType>::kChargedHadron,
                  boost::make_filter_iterator(
                    pfChargedJunk, regionalJunk.begin(), regionalJunk.end()),
                  boost::make_filter_iterator(
@@ -338,8 +423,8 @@ RecoTauBuilderConePlugin::return_type RecoTauBuilderConePlugin::operator()(
       );
 
   // Build isolation neutral hadrons
-  tau.addPFCands(RecoTauConstructor::kIsolation,
-                 RecoTauConstructor::kNeutralHadron,
+  tau.addPFCands(RecoTauConstructor<TauType, PFType, PFInTauType>::kIsolation,
+                 RecoTauConstructor<TauType, PFType, PFInTauType>::kNeutralHadron,
                  boost::make_filter_iterator(
                    xclean::makePredicateAND(isoConePFNHFilter, pfCandXCleaner),
                    pfnhs.begin(), pfnhs.end()),
@@ -348,8 +433,8 @@ RecoTauBuilderConePlugin::return_type RecoTauBuilderConePlugin::operator()(
                    pfnhs.end(), pfnhs.end()));
 
   // Add regional stuff not in jet
-  tau.addPFCands(RecoTauConstructor::kIsolation,
-                 RecoTauConstructor::kNeutralHadron,
+  tau.addPFCands(RecoTauConstructor<TauType, PFType, PFInTauType>::kIsolation,
+                 RecoTauConstructor<TauType, PFType, PFInTauType>::kNeutralHadron,
                  boost::make_filter_iterator(
                    pfNeutralJunk, regionalJunk.begin(), regionalJunk.end()),
                  boost::make_filter_iterator(
@@ -357,15 +442,15 @@ RecoTauBuilderConePlugin::return_type RecoTauBuilderConePlugin::operator()(
       );
 
   // Build isolation PiZeros
-  tau.addPiZeros(RecoTauConstructor::kIsolation,
+  tau.addPiZeros(RecoTauConstructor<TauType, PFType, PFInTauType>::kIsolation,
                  PiZeroDRFilterIter(isoConePiZeroFilter, cleanPiZeros.begin(),
                                     cleanPiZeros.end()),
                  PiZeroDRFilterIter(isoConePiZeroFilter, cleanPiZeros.end(),
                                     cleanPiZeros.end()));
 
   // Add regional stuff not in jet
-  tau.addPFCands(RecoTauConstructor::kIsolation,
-                 RecoTauConstructor::kGamma,
+  tau.addPFCands(RecoTauConstructor<TauType, PFType, PFInTauType>::kIsolation,
+                 RecoTauConstructor<TauType, PFType, PFInTauType>::kGamma,
                  boost::make_filter_iterator(
                    pfGammaJunk, regionalJunk.begin(), regionalJunk.end()),
                  boost::make_filter_iterator(
@@ -375,19 +460,35 @@ RecoTauBuilderConePlugin::return_type RecoTauBuilderConePlugin::operator()(
   // Put our built tau in the output - 'false' indicates don't build the
   // leading candidates, we already did that explicitly above.
 
-  std::auto_ptr<reco::PFTau> tauPtr = tau.get(false);
+  std::auto_ptr<TauType> tauPtr = tau.get(false);
 
   // Set event vertex position for tau
-  reco::VertexRef primaryVertexRef = primaryVertex(jet);
+  reco::VertexRef primaryVertexRef = this->primaryVertex(*tauPtr);
   if ( primaryVertexRef.isNonnull() )
     tauPtr->setVertex(primaryVertexRef->position());
+
+  // Set missing tau quantities
+  setTauQuantities(*tauPtr,
+  		   minAbsPhotonSumPt_insideSignalCone_,
+  		   minRelPhotonSumPt_insideSignalCone_
+		   );
 
   output.push_back(tauPtr);
   return output.release();
 }
+
+template class RecoTauBuilderGenericConePlugin<reco::PFTau, reco::PFCandidate, reco::PFCandidate>;
+typedef RecoTauBuilderGenericConePlugin<reco::PFTau, reco::PFCandidate, reco::PFCandidate> RecoTauBuilderConePlugin;
+
+template class RecoTauBuilderGenericConePlugin<reco::PFBaseTau, pat::PackedCandidate, reco::Candidate>;
+typedef RecoTauBuilderGenericConePlugin<reco::PFBaseTau, pat::PackedCandidate, reco::Candidate> RecoBaseTauBuilderConePlugin;
+
 }}  // end namespace reco::tauk
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 DEFINE_EDM_PLUGIN(RecoTauBuilderPluginFactory,
                   reco::tau::RecoTauBuilderConePlugin,
                   "RecoTauBuilderConePlugin");
+DEFINE_EDM_PLUGIN(RecoBaseTauBuilderPluginFactory,
+                  reco::tau::RecoBaseTauBuilderConePlugin,
+                  "RecoBaseTauBuilderConePlugin");
