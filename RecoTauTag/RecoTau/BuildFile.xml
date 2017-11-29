@@ -2,6 +2,7 @@
 <use   name="MagneticField/Records"/>
 <use   name="CondFormats/EgammaObjects"/>
 <use   name="DataFormats/Math"/>
+<use   name="DataFormats/PatCandidates"/>
 <use   name="DataFormats/TauReco"/>
 <use   name="DataFormats/VertexReco"/>
 <use   name="DataFormats/ParticleFlowCandidate"/>
@@ -24,6 +25,9 @@
 <use   name="PhysicsTools/JetMCUtils"/>
 <use   name="CommonTools/Utils"/>
 <use   name="roottmva"/>
+<use   name="FastSimulation/BaseParticlePropagator"/>
+<use   name="SimGeneral/HepPDTRecord"/>
+<use   name="heppdt"/>
 <export>
   <lib   name="1"/>
 </export>

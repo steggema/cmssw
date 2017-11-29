@@ -110,7 +110,6 @@ namespace
       return chargedHadron.getTrack().get();
     }
     if (chargedPFPCand) {
-        if (chargedPFPCand->hasTrackDetails())
           return &chargedPFPCand->pseudoTrack();
     }
     return nullptr;

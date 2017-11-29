@@ -17,7 +17,7 @@ namespace {
     // In MiniAOD, even isolated tracks are saved as candidates, so the track Ptr doesn't exist
     const pat::PackedCandidate* chargedPFPCand = dynamic_cast<const pat::PackedCandidate*> (&*chargedHadron.getChargedPFCandidate());
     if (chargedPFPCand) {
-        if (chargedPFPCand->hasTrackDetails())
+        // if (chargedPFPCand->hasTrackDetails())
           return &chargedPFPCand->pseudoTrack();
     }
     return nullptr;

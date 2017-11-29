@@ -35,5 +35,7 @@
   <use   name="MagneticField/Engine"/>
   <use   name="MagneticField/Records"/>
   <use   name="FastSimulation/BaseParticlePropagator"/>
+  <use   name="SimGeneral/HepPDTRecord"/>
   <use   name="root"/>
+  <use   name="heppdt"/>
 </library>

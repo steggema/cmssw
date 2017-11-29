@@ -88,7 +88,7 @@ PFBaseTauTransverseImpactParameters::~PFBaseTauTransverseImpactParameters(){
 namespace {
   const reco::Track* getTrack(const reco::Candidate& cand) {
     const pat::PackedCandidate* pCand = dynamic_cast<const pat::PackedCandidate*>(&cand);
-    if (pCand && pCand->hasTrackDetails())
+    // if (pCand && pCand->hasTrackDetails())
     	return &pCand->pseudoTrack();
     return nullptr;
   }

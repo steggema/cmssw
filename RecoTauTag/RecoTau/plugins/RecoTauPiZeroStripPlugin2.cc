@@ -191,7 +191,7 @@ namespace
     }
 
     const pat::PackedCandidate* packedCand = dynamic_cast<const pat::PackedCandidate*>(&cand);
-    if (packedCand && packedCand->hasTrackDetails())
+    if (packedCand) // && packedCand->hasTrackDetails())
     	return &packedCand->pseudoTrack();
 
     return nullptr;

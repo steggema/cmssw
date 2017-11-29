@@ -37,7 +37,7 @@ class TauIdMVAAuxiliaries {
     float tau_leadTrackChi2(const reco::PFBaseTau& tau) const {
       float LeadingTracknormalizedChi2 = 0;
       const auto& leadingPFCharged = edm::Ptr<pat::PackedCandidate>(tau.leadPFChargedHadrCand());
-      if (leadingPFCharged.isNonnull() && leadingPFCharged->hasTrackDetails()) {
+      if (leadingPFCharged.isNonnull()) {
         const auto& tref = leadingPFCharged->pseudoTrack();
         LeadingTracknormalizedChi2 = (float)(tref.normalizedChi2());
       }

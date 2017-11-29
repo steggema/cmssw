@@ -148,7 +148,7 @@ namespace {
       }
       const pat::PackedCandidate* chargedPFPCand = dynamic_cast<const pat::PackedCandidate*> (&*nextChargedHadron.getChargedPFCandidate());
       if (chargedPFPCand) {
-        if (chargedPFPCand->hasTrackDetails())
+        // if (chargedPFPCand->hasTrackDetails())
           return &chargedPFPCand->pseudoTrack();
       }
     }
