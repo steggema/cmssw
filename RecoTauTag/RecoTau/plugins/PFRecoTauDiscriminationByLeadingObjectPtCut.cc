@@ -69,3 +69,4 @@ PFRecoTauDiscriminationByLeadingObjectPtCut::fillDescriptions(edm::Configuration
 }
 
 DEFINE_FWK_MODULE(PFRecoTauDiscriminationByLeadingObjectPtCut);
+
