@@ -88,6 +88,39 @@ chsMetTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
     ),
 )
 
+puMetTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
+    src = cms.InputTag("patpfPUMET"),
+    name = cms.string("PUMET"),
+    doc = cms.string("PU MET"),
+    singleton = cms.bool(True),  # there's always exactly one MET per event
+    extension = cms.bool(False), # this is the main table for the MET
+    variables = cms.PSet(PTVars,
+       sumEt = Var("sumEt()", float, doc="scalar sum of Et",precision=10),
+    ),
+)
+
+noPUMetTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
+    src = cms.InputTag("patpfNoPUMET"),
+    name = cms.string("NoPUMET"),
+    doc = cms.string("NoPU MET"),
+    singleton = cms.bool(True),  # there's always exactly one MET per event
+    extension = cms.bool(False), # this is the main table for the MET
+    variables = cms.PSet(PTVars,
+       sumEt = Var("sumEt()", float, doc="scalar sum of Et",precision=10),
+    ),
+)
+
+puCorrMetTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
+    src = cms.InputTag("patpfPUCorrectedMET"),
+    name = cms.string("PUCorrMET"),
+    doc = cms.string("PUCorr MET"),
+    singleton = cms.bool(True),  # there's always exactly one MET per event
+    extension = cms.bool(False), # this is the main table for the MET
+    variables = cms.PSet(PTVars,
+       sumEt = Var("sumEt()", float, doc="scalar sum of Et",precision=10),
+    ),
+)
+
 metFixEE2017Table = metTable.clone()
 metFixEE2017Table.src = cms.InputTag("slimmedMETsFixEE2017")
 metFixEE2017Table.name = cms.string("METFixEE2017")
@@ -108,7 +141,7 @@ metMCTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
 
 
 
-metTables = cms.Sequence( metTable + rawMetTable + caloMetTable + puppiMetTable + tkMetTable + chsMetTable)
+metTables = cms.Sequence( metTable + rawMetTable + caloMetTable + puppiMetTable + tkMetTable + chsMetTable + puMetTable + noPUMetTable + puCorrMetTable)
 _withFixEE2017_sequence = cms.Sequence(metTables.copy() + metFixEE2017Table)
 for modifier in run2_nanoAOD_94XMiniAODv1, run2_nanoAOD_94XMiniAODv2:
     modifier.toReplaceWith(metTables,_withFixEE2017_sequence)
