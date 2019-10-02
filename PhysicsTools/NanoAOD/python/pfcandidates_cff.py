@@ -18,3 +18,11 @@ pfCandidatesTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
         pdgId = Var("pdgId",int,doc="PDG id of PF cand"),
     ),
 )
+
+pfCandidatesJetLinks = cms.EDProducer("PFCandidateJetLinker",
+    pfcandidates = cms.InputTag("packedPFCandidates"),
+    jets = cms.InputTag("slimmedJets"),
+    name = cms.string("PF"),
+    objName = cms.string("jets"),
+    doc  = cms.string("Links from PF candidates to jets"),
+)
