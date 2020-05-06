@@ -25,6 +25,7 @@ private:
   const edm::EDGetTokenT<std::vector<pat::PackedCandidate> > pf_token_;
   float norm_;
   bool ignore_leptons_;
+  unsigned int max_n_pf_;
 
   tensorflow::Session* session_;
 
@@ -45,7 +46,8 @@ namespace {
 DeepMETProducer::DeepMETProducer(const edm::ParameterSet& cfg, const DeepMETCache* cache) :
   pf_token_(consumes<std::vector<pat::PackedCandidate> >(cfg.getParameter<edm::InputTag>("pf_src"))),
   norm_(cfg.getParameter<double>("norm_factor")), 
-  ignore_leptons_(cfg.getParameter<bool>("ignore_leptons")) {
+  ignore_leptons_(cfg.getParameter<bool>("ignore_leptons")),
+  max_n_pf_(cfg.getParameter<unsigned int>("max_n_pf")) {
     session_ = tensorflow::createSession(cache->graph_def);
     produces<pat::METCollection>();
     charge_embedding_ = {{-1, 0}, {0, 1}, {1, 2}};
@@ -57,10 +59,10 @@ void DeepMETProducer::produce(edm::Event& event, const edm::EventSetup& setup) {
   event.getByToken(pf_token_, pf_h);
 
   // PF keys [b'PF_dxy', b'PF_dz', b'PF_eta', b'PF_mass', b'PF_pt', b'PF_puppiWeight', b'PF_px', b'PF_py']
-  tensorflow::TensorShape shape({1, 4500, 8});
-  tensorflow::TensorShape cat_shape({1, 4500, 1});
+  tensorflow::TensorShape shape({1, max_n_pf_, 8});
+  tensorflow::TensorShape cat_shape({1, max_n_pf_, 1});
   tensorflow::Tensor input(tensorflow::DT_FLOAT, shape);
-  tensorflow::Tensor input_cat0(tensorflow::DT_FLOAT, cat_shape); // FIXME - double-check int type
+  tensorflow::Tensor input_cat0(tensorflow::DT_FLOAT, cat_shape);
   tensorflow::Tensor input_cat1(tensorflow::DT_FLOAT, cat_shape);
   tensorflow::Tensor input_cat2(tensorflow::DT_FLOAT, cat_shape);
 
@@ -104,10 +106,14 @@ void DeepMETProducer::produce(edm::Event& event, const edm::EventSetup& setup) {
     input_cat2.tensor<float, 3>()(0, i_pf, 0) = pf.fromPV();
 
     ++i_pf;
+    if (i_pf > max_n_pf_)
+    {
+      break; // output a warning?
+    }
   }
 
   std::vector<tensorflow::Tensor> outputs;
-  std::vector<std::string> output_names = {"output/BiasAdd"}; // maybe need to use output/kernel
+  std::vector<std::string> output_names = {"output/BiasAdd"};
 
   // run the inference and return met
   tensorflow::run(session_, input_list, output_names, &outputs);
@@ -118,8 +124,6 @@ void DeepMETProducer::produce(edm::Event& event, const edm::EventSetup& setup) {
 
   px -= px_leptons;
   py -= py_leptons;
-
-  std::cout << "DeepMET px, py: " << px << ", " << py << std::endl;
 
   auto pf_mets = std::make_unique<pat::METCollection>();
   reco::LeafCandidate::LorentzVector p4(px, py, 0., std::sqrt(px*px + py*py));
@@ -151,6 +155,7 @@ void DeepMETProducer::fillDescriptions(edm::ConfigurationDescriptions& descripti
   desc.add<edm::InputTag>("pf_src", edm::InputTag("packedPFCandidates"));
   desc.add<bool>("ignore_leptons", false);
   desc.add<double>("norm_factor", 50.);
+  desc.add<unsigned int>("max_n_pf", 4500);
   desc.add<std::string>("graph_path", "RecoMET/METPUSubtraction/data/tf_models/deepmet_v0.pb");
   descriptions.add("deepMETProducer", desc);
 }
