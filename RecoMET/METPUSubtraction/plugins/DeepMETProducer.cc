@@ -15,7 +15,7 @@ struct DeepMETCache {
 class DeepMETProducer : public edm::stream::EDProducer<edm::GlobalCache<DeepMETCache> > {
 public:
   explicit DeepMETProducer(const edm::ParameterSet&, const DeepMETCache*);
-  void produce(edm::Event& event, const edm::EventSetup& setup);
+  void produce(edm::Event& event, const edm::EventSetup& setup) override;
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
   // static methods for handling the global cache
@@ -156,7 +156,7 @@ void DeepMETProducer::fillDescriptions(edm::ConfigurationDescriptions& descripti
   desc.add<bool>("ignore_leptons", false);
   desc.add<double>("norm_factor", 50.);
   desc.add<unsigned int>("max_n_pf", 4500);
-  desc.add<std::string>("graph_path", "RecoMET/METPUSubtraction/data/tf_models/deepmet_v0.pb");
+  desc.add<std::string>("graph_path", "RecoMET/METPUSubtraction/data/deepmet/deepmet_v1_2018.pb");
   descriptions.add("deepMETProducer", desc);
 }
 
