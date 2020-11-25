@@ -49,7 +49,7 @@ slimmedMuonsWithUserData = cms.EDProducer("PATMuonUserDataEmbedder",
 
 finalMuons = cms.EDFilter("PATMuonRefSelector",
     src = cms.InputTag("slimmedMuonsWithUserData"),
-    cut = cms.string("pt > 3") # && (passed('CutBasedIdLoose') || passed('SoftCutBasedId') || passed('SoftMvaId') || passed('CutBasedIdGlobalHighPt') || passed('CutBasedIdTrkHighPt'))")
+    cut = cms.string("pt > 3 && (passed('CutBasedIdLoose') || passed('SoftCutBasedId') || passed('SoftMvaId') || passed('CutBasedIdGlobalHighPt') || passed('CutBasedIdTrkHighPt'))")
 )
 
 finalLooseMuons = cms.EDFilter("PATMuonRefSelector", # for isotrack cleaning
@@ -164,13 +164,7 @@ muonTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
         miniIsoId = Var("passed('MiniIsoLoose')+passed('MiniIsoMedium')+passed('MiniIsoTight')+passed('MiniIsoVeryTight')","uint8",doc="MiniIso ID from miniAOD selector (1=MiniIsoLoose, 2=MiniIsoMedium, 3=MiniIsoTight, 4=MiniIsoVeryTight)"),
         multiIsoId = Var("?passed('MultiIsoMedium')?2:passed('MultiIsoLoose')","uint8",doc="MultiIsoId from miniAOD selector (1=MultiIsoLoose, 2=MultiIsoMedium)"),
         triggerIdLoose = Var("passed('TriggerIdLoose')",bool,doc="TriggerIdLoose ID"), 
-        inTimeMuon = Var("passed('InTimeMuon')",bool,doc="inTimeMuon ID"),
-        rpcTimeInOut = Var("rpcTime().timeAtIpInOut", float, doc="RPC time in out"),
-        timeInOut = Var("time().timeAtIpInOut", float, doc="time in out"),
-        rpcTimeInOutErr = Var("rpcTime().timeAtIpInOutErr", float, doc="RPC time error in out"),
-        timeInOutErr = Var("time().timeAtIpInOutErr", float, doc="time error in out"),
-        rpcTimeNdof = Var("rpcTime().nDof", float, doc="RPC time ndof"),
-        timeNdof = Var("time().nDof", float, doc="time ndof"),
+        inTimeMuon = Var("passed('InTimeMuon')",bool,doc="inTimeMuon ID")
         ),
     externalVariables = cms.PSet(
         mvaTTH = ExtVar(cms.InputTag("muonMVATTH"),float, doc="TTH MVA lepton ID score",precision=14),
